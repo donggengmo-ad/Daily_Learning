@@ -1,0 +1,173 @@
+/* 
+这些特殊注释方法来自better comments插件
+可以用这个插件来更多样化地注释代码
+也可以自定义，通过插件设置
+找到settings.json，定义自己的注释外观
+
+已有：! ? / _  todo * fx @ $ % ha #这些特殊注释方法
+
+我在这里阐述这些方法设计思路
+方便记忆和使用
+
+默认方法：
+
+! 紧急注释，!表示紧急
+? 疑问注释，?表示不确定
+todo 待办注释，todo顾名思义
+// 删除代码，//就是注释符号，表示这行代码被注释掉了
+* 重点注释，*表示重点
+
+自定义方法：
+
+/ 斜体注释，/表示倾斜
+_ 下划线注释，_就是下划线
+## 紫色注释，我也不知道#跟紫色有什么关系，反正紫色好看
+fx 错误注释，fx -> fix
+$ 金色的注释，$表示金钱
+% 数据注释，%表示百分比
+ha 恶搞注释，ha -> hahaha
+@ 有其他关联的注释，@表示链接
+\ 如果注释本身涉及这些符号，用\还原原样注释，因为\是转义符
+*/
+
+// settings.json中定义的注释外观：
+{
+    "better-comments.tags": [
+
+
+        // 初始效果
+        {
+            "tag": "!",
+            "color": "#FF2D00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "?",
+            "color": "#3498DB",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "//",
+            "color": "#474747",
+            "strikethrough": true,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "todo",
+            "color": "#FF8C00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "*",
+            "color": "#A3D977",//让绿色比#98C379更亮一些：#A3D977
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": true
+        }, 
+        // 自定义效果
+        {
+            "tag": "_",
+            "color": "#E5C07B",
+            "strikethrough": false,
+            "underline": true,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "/",
+            "color": "#ABB2BF",//暗灰色
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": true
+        },
+        {
+            "tag": "#",
+            "color": "#C678DD",//purple
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            //原版注释
+            "tag": "\\",
+            "color": "#6A9955",//vscode注释默认颜色，偏深的绿色：#6A9955
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        // AI推荐效果
+        {
+            "tag": "fx",
+            "color": "#FF5555",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": true,
+            "italic": false
+        },
+        {
+            "tag": "@",
+            "color": "#61AFEF",
+            "strikethrough": false,
+            "underline": true,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "%",
+            "color": "#7FDBFF",//让色青比#56B6C2更亮一些 ：#7FDBFF
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": true
+        },
+        {
+            "tag": "$",
+            "color": "#FFFF00",
+            "strikethrough": false,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": false
+        },
+        {
+            "tag": "ha",//这是一个娱乐效果
+            "color": "#FF69B4",//hot pink
+            "strikethrough": true,
+            "underline": false,
+            "backgroundColor": "transparent",
+            "bold": false,
+            "italic": true
+        }
+
+    ],
+
+    "reminder":"复制上面的列表，不要这行和最外层大括号，粘贴到settings.json",
+    "smalltalk":"非得加上这写没用的是因为不加会报错，烦得很o(╥﹏╥)o"
+}

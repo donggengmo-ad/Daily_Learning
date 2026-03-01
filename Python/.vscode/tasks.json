@@ -1,0 +1,19 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "python",
+			"problemMatcher": [
+				"$python"
+			],
+			"label": "Python: Python Run",
+			"command": "python",
+			"args": [
+				"${file}"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		}
+	]
+}
