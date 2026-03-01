@@ -1,0 +1,282 @@
+int printDiceSelect(int player_no){//旧版骰子选择界面
+	int selected_size = 0;//当前选择骰子面数
+	int gap = (WIDTH - 4 * DICE_SIZE) / 5;
+	//清屏
+	cleardevice();
+	putimage(0, 0, &background);
+	transparentimage(&showcase,25,230);
+	//打印标题
+	settextstyle(HEIGHT / 10,HEIGHT / 20,_T("Calibri"));
+	settextcolor(WHITE);
+	outtextxy(WIDTH / 2 - 100, 50, _T("Dice Selection"));
+	//打印提示
+	settextcolor(YELLOW);
+	settextstyle(HEIGHT / 20,HEIGHT / 40,_T("Calibri"));
+	outtextxy(130, 210, _T("Make Sure Others Don't See Your Choice!"));
+	//打印玩家信息
+	printPlayer(WIDTH - 200, 150, player_no, 2);
+	//显示骰子选项
+	settextstyle(HEIGHT / 30,HEIGHT / 60,_T("Calibri"));
+	//判断是否加价
+	int dice_prices[4];
+	for(int i = 0;i < 4;i++){
+		dice_prices[i] = dices[i].price;
+		if(players[player_no].ex_auc == 1){
+			//上一轮为拍卖长，加价1
+			dice_prices[i] = dices[i].price + 1;
+		}
+	}
+	for(int i = 0;i < 4;i++){	
+		//显示骰子图片和信息
+		transparentimage(&dices[i].image, gap + i * (DICE_SIZE + gap),300);
+		TCHAR *dice_name = CharToTCHAR(dices[i].name);
+		TCHAR dice_price[10];
+		_itot(dice_prices[i], dice_price, 10);
+		settextcolor(BLACK);
+		outtextxy(gap + i * (DICE_SIZE + gap) + DICE_SIZE / 4 - 20, 300 + DICE_SIZE + 10, dice_name);
+		//调整价格颜色
+		if(players[player_no].block < dice_prices[i]){
+			settextcolor(RED);
+		}
+		else{
+			settextcolor(GREEN);
+		}
+		outtextxy(gap + i * (DICE_SIZE + gap) + DICE_SIZE / 4, 300 + DICE_SIZE + 50, dice_price);
+		outtextxy(gap + i * (DICE_SIZE + gap) + DICE_SIZE / 4 + 15, 300 + DICE_SIZE + 50, _T("$"));
+		delete[] dice_name;
+		//提示按键
+		settextcolor(BLUE);
+		if(i == 0){
+			outtextxy(gap + i * (DICE_SIZE + gap) + DICE_SIZE / 4, 300 + DICE_SIZE + 100, _T("Press 'a'"));
+		}
+		else if(i == 1){
+			outtextxy(gap + i * (DICE_SIZE + gap) + DICE_SIZE / 4, 300 + DICE_SIZE + 100, _T("Press 's'"));
+		}
+		else if(i == 2){
+			outtextxy(gap + i * (DICE_SIZE + gap) + DICE_SIZE / 4, 300 + DICE_SIZE + 100, _T("Press 'd'"));
+		}
+		else if(i == 3){
+			outtextxy(gap + i * (DICE_SIZE + gap) + DICE_SIZE / 4, 300 + DICE_SIZE + 100, _T("Press 'f'"));
+		}
+	}
+	//打印放弃键
+	setlinecolor(BLACK);
+	setlinestyle(PS_SOLID, 1);
+	setfillcolor(RED);
+	fillrectangle(gap * 2, HEIGHT - gap * 3, gap * 2 + 120, HEIGHT - gap * 2);
+	settextstyle(gap / 2,gap / 4,_T("Calibri"));
+	settextcolor(WHITE);
+	outtextxy(gap * 2 + 15, HEIGHT - gap * 3 + 10, _T("Quit"));
+	//刷新显示
+	FlushBatchDraw();
+	//检测秘密输入
+	while(selected_size == 0){
+		ExMessage msg = getmessage(EX_KEY | EX_MOUSE);
+		if(msg.lbutton){//鼠标左键点击
+			int x = msg.x;
+			int y = msg.y;
+			//检查是否点击了放弃键
+			if(x >= gap * 2 && x <= gap * 2 + 120 &&
+				y >= HEIGHT - gap * 3 && y <= HEIGHT - gap * 2){
+				//放弃选择骰子
+				selected_size = -1;
+			}
+		}
+		if(msg.message == WM_KEYUP){
+			if(msg.vkcode == 'A'){
+				if(players[player_no].block >= dice_prices[0]){
+					selected_size = 4;
+				}
+			}
+			else if(msg.vkcode == 'S'){
+				if(players[player_no].block >= dice_prices[1]){
+					selected_size = 6;
+				}
+			}
+			else if(msg.vkcode == 'D'){
+				if(players[player_no].block >= dice_prices[2]){
+					selected_size = 12;
+				}
+			}
+			else if(msg.vkcode == 'F'){
+				if(players[player_no].block >= dice_prices[3]){
+					selected_size = 20;
+				}
+			}
+		}
+	}
+	return selected_size;
+}
+int printElection(int player_no){//旧版拍卖长选举界面
+    int gap = HEIGHT / (player_num + 1);
+	int temp_salary = 0;
+	int confirm_salary = 0;
+	while(confirm_salary < 10 && confirm_salary > -1){	
+		//清屏
+		cleardevice();
+		putimage(0, 0, &background);
+		//打印标题
+		settextstyle(gap / 2,gap / 4,_T("Calibri"));
+		settextcolor(WHITE);
+		outtextxy(WIDTH / 2 - 150, 50, _T("Auctioneer Election"));
+		//显示玩家头像
+		for(int i = 0;i < player_num;i++){
+			if(i == player_no){
+				//高亮显示当前玩家
+				printPlayer(50, gap * (i + 1),i,1);
+				//显示控制条
+				setlinecolor(WHITE);
+				setlinestyle(PS_SOLID, 1);
+				setfillcolor(WHITE);
+				fillrectangle(50 + AVATAR_SIZE + 10, gap * (i + 1), 200 + AVATAR_SIZE + 10, gap * (i + 1) + AVATAR_SIZE);
+				//输入玩家出价
+				settextstyle(gap / 4,gap / 8,_T("Calibri"));
+				settextcolor(BLACK);
+				TCHAR sal[100];
+				_itot(temp_salary, sal, 10);
+				outtextxy(50 + AVATAR_SIZE + 20, gap * (i + 1) + AVATAR_SIZE / 2 - 10, sal);
+				outtextxy(50 + AVATAR_SIZE + 70, gap * (i + 1) + AVATAR_SIZE / 2 - 10, _T("%"));
+				//打印上下三角
+				setlinecolor(BLUE);
+				setfillcolor(BLUE);
+				POINT pts1[] = {{230 + AVATAR_SIZE + 10, gap * (i + 1)},//顶点
+								{230 + AVATAR_SIZE, gap * (i + 1) + AVATAR_SIZE / 3},//左下点
+								{230 + AVATAR_SIZE + 20, gap * (i + 1) + AVATAR_SIZE / 3}};//右下点
+				fillpolygon(pts1, 3);
+				setlinecolor(RED);
+				setfillcolor(RED);
+				POINT pts2[] = {{230 + AVATAR_SIZE + 10, gap * (i + 1) + AVATAR_SIZE},//底点
+								{230 + AVATAR_SIZE, gap * (i + 1) + AVATAR_SIZE * 2 / 3},//左上点
+								{230 + AVATAR_SIZE + 20, gap * (i + 1) + AVATAR_SIZE * 2 / 3}};//右上点
+				fillpolygon(pts2, 3);
+				//打印确认键
+				setlinecolor(BLACK);
+				setfillcolor(GREEN);
+				fillrectangle(250 + AVATAR_SIZE + 10, gap * (i + 1) + AVATAR_SIZE / 5,
+								370 + AVATAR_SIZE + 10, gap * (i + 1) + AVATAR_SIZE * 4 / 5);
+				settextstyle(gap / 5,gap / 10,_T("Calibri"));
+				settextcolor(WHITE);
+				outtextxy(255 + AVATAR_SIZE + 10, gap * (i + 1) + AVATAR_SIZE / 2 - 10, _T("Confirm"));
+				//打印放弃键
+				setlinecolor(BLACK);
+				setfillcolor(RED);
+				fillrectangle(380 + AVATAR_SIZE + 10, gap * (i + 1) + AVATAR_SIZE / 5,
+								440 + AVATAR_SIZE + 10, gap * (i + 1) + AVATAR_SIZE * 4 / 5);
+				settextstyle(gap / 6,gap / 12,_T("Calibri"));
+				settextcolor(WHITE);
+				outtextxy(385 + AVATAR_SIZE + 10, gap * (i + 1) + AVATAR_SIZE / 2 - 10, _T("Quit"));
+			}
+			else{
+				//显示其他玩家出价
+				if(players[i].salary == 0){
+					//未出价显示为“--”
+					settextstyle(gap / 4,gap / 8,_T("Calibri"));
+					settextcolor(WHITE);
+					outtextxy(50 + AVATAR_SIZE + 20, gap * (i + 1), _T("--"));
+					outtextxy(50 + AVATAR_SIZE + 65, gap * (i + 1) + AVATAR_SIZE / 2 - 10, _T("%"));
+				}
+				else if(players[i].salary == -1){
+					//放弃显示为“Quit”
+					settextstyle(gap / 4,gap / 8,_T("Calibri"));
+					settextcolor(RED);
+					outtextxy(50 + AVATAR_SIZE + 20, gap * (i + 1), _T("Quit"));
+				}
+				else{
+					//显示出价
+					settextstyle(gap / 4,gap / 8,_T("Calibri"));
+					settextcolor(WHITE);
+					TCHAR sal[100];
+					_itot(players[i].salary, sal, 10);
+					outtextxy(50 + AVATAR_SIZE + 20, gap * (i + 1), sal);
+					outtextxy(50 + AVATAR_SIZE + 65, gap * (i + 1) + AVATAR_SIZE / 2 - 10, _T("%"));
+				}
+				//显示其他玩家
+				printPlayer(50, gap * (i + 1), i, 0);
+			}
+		}
+		//打印当前最低价和玩家
+		settextstyle(gap / 3,gap / 6,_T("Calibri"));
+		settextcolor(WHITE);
+		outtextxy(530, 150, _T("Current Auctioneer:"));
+		settextstyle(gap / 4,gap / 8,_T("Calibri"));
+		if(rounds.auc_no == -1){
+			//无最低价
+			outtextxy(610, 220, _T("None"));
+		}
+		else{
+			//打印最低价玩家
+			printPlayer(560, 200, rounds.auc_no, 0);
+			//打印出价
+			settextstyle(gap / 4,gap / 8,_T("Calibri"));
+			outtextxy(560, 300, _T("Yeild Rate:"));
+			TCHAR sal[100];
+			_itot(rounds.salary, sal, 10);
+			outtextxy(680, 300, sal);
+			outtextxy(720, 300, _T("%"));
+		}
+		//检测鼠标点击
+		ExMessage msg = getmessage(EX_MOUSE);
+		if(msg.lbutton){//鼠标左键点击
+			int x = msg.x;
+			int y = msg.y;
+			//检查是否点击了上下三角、确认键、放弃键
+			if(x >= 230 + AVATAR_SIZE && x <= 230 + AVATAR_SIZE + 20){
+				if(y >= gap * (player_no + 1) && y <= gap * (player_no + 1) + AVATAR_SIZE / 3){
+					//点击上三角，出价加10%
+					if(temp_salary <= 90){
+						temp_salary += 10;
+					}
+				}
+				else if(y >= gap * (player_no + 1) + AVATAR_SIZE * 2 / 3 && y <= gap * (player_no + 1) + AVATAR_SIZE){
+					//点击下三角，出价减10%
+					if(temp_salary >= 10){
+						temp_salary -= 10;
+					}
+				}
+			}
+			if(x >= 250 + AVATAR_SIZE + 10 && x <= 370 + AVATAR_SIZE + 10 &&
+			y >= gap * (player_no + 1) + AVATAR_SIZE / 5 && y <= gap * (player_no + 1) + AVATAR_SIZE * 4 / 5){
+				//点击确认键，返回出价
+				confirm_salary = temp_salary;
+			}
+			if(x >= 380 + AVATAR_SIZE + 10 && x <= 440 + AVATAR_SIZE + 10 &&
+				y >= gap * (player_no + 1) + AVATAR_SIZE / 5 && y <= gap * (player_no + 1) + AVATAR_SIZE * 4 / 5){
+				//点击放弃键，返回-1
+				confirm_salary = -1;
+			}
+		}
+		FlushBatchDraw();
+	}
+	return confirm_salary;
+}
+/*旧版按分数打印卡牌方法
+		for(int j = 0,k = 0;j < 10;j++){//j为卡牌编号（用于遍历），k为该玩家卡牌计数（用于计算位置）
+			if(cards[j].belong == i){//该卡牌属于该玩家，堆叠打印卡牌封面
+				//计算卡牌大小
+				int card_w = CARD_WIDTH * 2 / 3;
+				int card_h = card_w * 3 / 2;
+				//计算卡牌位置
+				int card_x = x - AVATAR_SIZE / 8 + k * card_w / 10;
+				int card_y = y + AVATAR_SIZE * 2 + k * card_h / 4;
+				//打印卡牌封面
+				PutImageZoom(card_x, card_y, card_w, card_h, &cards[j].cover_source);
+				//打印技能
+				if(cards[j].effect != 0){
+					settextstyle(card_h / 7, card_h / 14, _T("Calibri"));
+					if(cards[j].effect == 1){
+						settextcolor(HSLtoRGB(220, 1, 0.5));//技能可生效
+					}
+					else if(cards[j].effect == -1){
+						settextcolor(HSLtoRGB(10, 1, 0.5));//技能条件达成一半
+					}
+					else if(cards[j].effect == -2){
+						settextcolor(HSLtoRGB(0, 0, 0.3));//技能失效
+					}
+					TCHAR *effect_text = CharToTCHAR(cards[j].effect_name);
+					outtextxy(card_x + card_w + 5, card_y + 5, effect_text);
+					delete[] effect_text;
+				}
+				k++;
+			}
+		}
+		*/
