@@ -27,7 +27,8 @@ class MLP:
         # 输入层 -> 隐藏层
         self.hidden = np.dot(self.input,self.w1_2) + self.b1_2
         # 激活函数：<=0的部分置0，>0的部分变1（阶跃函数）
-        self.hidden = np.where(self.hidden <= 0, 0, 1) # np.where(condition, x, y):满足条件condition的元素替换为x，不满足条件的元素替换为y
+        self.hidden = np.where(self.hidden <= 0, 0, 1) 
+        #/ np.where(condition, x, y):满足条件condition的元素替换为x，不满足条件的元素替换为y
         # 隐藏层 -> 输出层
         self.output = np.dot(self.hidden,self.w2_3) + self.b2_3
         # 再次激活
