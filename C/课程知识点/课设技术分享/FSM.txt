@@ -1,0 +1,84 @@
+void EnemyMove(){
+    if(看到敌人) 攻击();
+    else 闲逛();
+}
+
+void EnemyMove(){
+    if(闲逛){
+        if(看到敌人){
+            if(血量低) 逃跑(); 
+            else {
+                追击();
+                if(追到敌人) {
+                    if(敌人死亡) 继续闲逛();
+                    else if(敌人逃跑) 继续追击();
+                    else if(血量低) 逃跑();
+                    else 攻击();
+                }
+                else if(失去敌人) 继续闲逛();
+                else if(血量低) 逃跑();
+            }
+        } 
+        else 继续闲逛();
+    }
+}
+
+void FsmState(){
+
+    Enter();
+
+    Execute();
+
+    Exit();
+}
+
+struct charactor{
+    int act;
+    void (*stateFunc)();
+}
+
+void 闲逛(){
+    //入口
+    charactor.act = WALK;
+    //主逻辑
+    execute(charactor.act);
+    //出口
+    if(看到敌人) charactor.state = 追击;
+}
+
+void 追击(){
+    //入口
+    charactor.act = RUN;
+    //主逻辑
+    execute(charactor.act);
+    //出口
+    if(追到敌人) charactor.state = 攻击;
+}
+
+void 攻击(){
+    switch(敌人类型){
+        //状态再分配
+        case 近战: 
+            charactor.state = 刀砍;
+            break;
+        case 远程: 
+            charactor.state = 箭射; 
+            break;
+        case 刺客: 
+            charactor.state = 偷袭;
+            break;
+    }    
+}
+
+void 逃跑(){
+    //入口
+    charactor.act = RUN;
+    //主逻辑
+    execute(charactor.act);
+    //出口
+    if(安全) charactor.state = 闲逛;
+}
+
+for(int i = 0;i < charactor_num;i++){
+    caractor[i].stateFunc();
+}
