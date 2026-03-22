@@ -32,6 +32,11 @@ void FsmState(){
     Exit();
 }
 
+struct charactor {
+    act;
+    state;
+}
+
 struct charactor{
     int act;
     void (*stateFunc)();
@@ -56,6 +61,24 @@ void 追击(){
 }
 
 void 攻击(){
+    //入口
+    charactor.act = ATTACK;
+    //主逻辑
+    execute(charactor.act);
+    //出口
+    if(血量低) charactor.state = 逃跑;
+}
+
+void 逃跑(){
+    //入口
+    charactor.act = RUN;
+    //主逻辑
+    execute(charactor.act);
+    //出口
+    if(安全) charactor.state = 闲逛;
+}
+
+void 攻击(){
     switch(敌人类型){
         //状态再分配
         case 近战: 
@@ -70,15 +93,6 @@ void 攻击(){
     }    
 }
 
-void 逃跑(){
-    //入口
-    charactor.act = RUN;
-    //主逻辑
-    execute(charactor.act);
-    //出口
-    if(安全) charactor.state = 闲逛;
-}
-
 for(int i = 0;i < charactor_num;i++){
-    caractor[i].stateFunc();
+    charactor[i].stateFunc();
 }
