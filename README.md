@@ -30,8 +30,8 @@
 ## 四、想说的话
 首次尝试比较认真滴创建仓库，现在也是很不规范，内容乱七八糟也没什么价值（Q～Q）。这仓库大概代表着我的初心和热情，我希望它能提醒我不断尝试，持续学习。我也希望此仓库能够在我的学习过程中不断地更新和完善，帮我更好地整理所学的知识，以后或许也会具有分享意义，变得更加有价值！
 
-![Last Commit](https://github.com/donggengmo-ad/Daily_Learning)
+![Last Commit](https://img.shields.io/github/last-commit/donggengmo-ad/Daily_Learning)
 
-![Top Language](https://github.com/donggengmo-ad/Daily_Learning)
+![Top Language](https://img.shields.io/github/languages/top/donggengmo-ad/Daily_Learning)
 
-![Status](https://github.com/donggengmo-ad/Daily_Learning)
+![Status](https://img.shields.io/badge/status-学习中-brightgreen)
