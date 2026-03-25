@@ -68,5 +68,6 @@ int main(){
             printf("%d ", count);
         }
         printf("\n");
+        delete[] a;
     }
 }
