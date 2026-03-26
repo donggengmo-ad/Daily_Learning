@@ -1,7 +1,31 @@
 //# 文件头
 
-//万能头（常用）
-#include <bits/stdc++.h>
+/*
+ * 注意：<cassert>是C++头文件（对应C的<assert.h>），只能在C++文件(.cpp)中使用。
+ * 若在C文件(.c)中使用#include <cassert>会报错：fatal error: 'cassert' file not found
+ * C文件中应使用：#include <assert.h>
+ * C++文件中可用：#include <cassert>（推荐）或 #include <assert.h>（兼容写法）
+ *
+ * 类似地，C++头文件命名规则：C标准库的<xxx.h>对应C++的<cxxx>
+ * 例如：<stdio.h> -> <cstdio>，<stdlib.h> -> <cstdlib>，<string.h> -> <cstring>，<math.h> -> <cmath>
+ */
+
+//万能头（GCC专用，不推荐在非GCC环境如macOS Clang下使用）
+// #include <bits/stdc++.h>
+
+//推荐写法：按需引入标准C++头文件（跨平台，兼容GCC/Clang/MSVC）
+#include <iostream>    // cin, cout, endl
+#include <iomanip>     // fixed, setprecision, hex, oct
+#include <vector>      // vector
+#include <stack>       // stack
+#include <queue>       // queue
+#include <set>         // set
+#include <map>         // map
+#include <utility>     // pair
+#include <algorithm>   // sort, reverse, lower_bound, upper_bound, max, min
+#include <string>      // string
+#include <cstring>     // memset
+#include <cassert>     // assert（C++写法；C文件中应使用<assert.h>）
 
 //命名空间，避免std::前缀
 using namespace std;
