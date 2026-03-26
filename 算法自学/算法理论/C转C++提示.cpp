@@ -124,14 +124,14 @@ int main(){
     reverse(v1.begin(), v1.end()); //反转动态数组v1的元素顺序
 
     //二分查找
-    auto it = lower_bound(v1.begin(), v1.end(), 10); //在动态数组v1中查找第一个>=10的元素，返回迭代器
+    auto it1 = lower_bound(v1.begin(), v1.end(), 10); //在动态数组v1中查找第一个>=10的元素，返回迭代器
     auto it2 = upper_bound(v1.begin(), v1.end(), 10); //在动态数组v1中查找第一个>10的元素，返回迭代器
 
     //初始化
     memset(v2.data(), 0, v2.size() * sizeof(int)); //将动态数组v2的所有元素初始化为0
 
     //最值
-    int a = 1, b = 2;
+    a = 1, b = 2;
     max(a,b);
     min(a,b);
 
