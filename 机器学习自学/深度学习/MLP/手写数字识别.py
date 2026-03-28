@@ -34,8 +34,8 @@ def load_data():
     # MNIST数据集包含60000张训练图像和10000张测试图像，每张图像是28*28的灰度图像，标签是0-9的数字
     # 数据集保存在当前目录下的data文件夹中，如果没有则会自动创建
     # 用自己的数据集则用ImageFolder类
-    train_dataset = datasets.MNIST(root='./机器学习/data', train=True, download=True, transform=transform)
-    test_dataset = datasets.MNIST(root='./机器学习/data', train=False, download=True, transform=transform)
+    train_dataset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+    test_dataset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
 
     #数据加载器
     #把数据分成小批次，每次训练一个批次，更新一次模型参数
