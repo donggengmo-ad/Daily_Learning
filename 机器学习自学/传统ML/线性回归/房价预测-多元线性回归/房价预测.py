@@ -20,15 +20,22 @@
 #/ statezip,（州和邮政编码）
 #// *country*，（国家，全都一样）
 
+from pyexpat import model
 import pandas as pd
-from sklearn.model_selection import train_test_split
 import torch
 from torch import nn
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.model_selection import train_test_split
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+data_path_upper = os.path.join(BASE_DIR, 'data', 'kagglehub', 'houseprice')+'/'
+model_path = os.path.join(BASE_DIR, 'linear_regression_model.pth')
 
 def preprocess_data():
+    
     # 读取数据
-    data = pd.read_csv('.\\机器学习\\data\\kagglehub\\houseprice\\data.csv')
+    data = pd.read_csv(data_path_upper + 'data.csv')
 
     # 删除无关特征
     data = data.drop(columns=['date', 'waterfront', 'view', 'street', 'country'])
@@ -48,12 +55,12 @@ def preprocess_data():
 
     # 划分训练集和测试集
     train_data, test_data = train_test_split(data, test_size=0.15, random_state=42)
-    train_data.to_csv('.\\机器学习\\data\\kagglehub\\houseprice\\train_data.csv', index=False)
-    test_data.to_csv('.\\机器学习\\data\\kagglehub\\houseprice\\test_data.csv', index=False)
+    train_data.to_csv(data_path_upper + 'train_data.csv', index=False)
+    test_data.to_csv(data_path_upper + 'test_data.csv', index=False)
 
 def load_data():
-    train_data = pd.read_csv('.\\机器学习\\data\\kagglehub\\houseprice\\train_data.csv')
-    test_data = pd.read_csv('.\\机器学习\\data\\kagglehub\\houseprice\\test_data.csv')
+    train_data = pd.read_csv(data_path_upper + 'train_data.csv')
+    test_data = pd.read_csv(data_path_upper + 'test_data.csv')
     return train_data, test_data
 
 class LinearRegression(nn.Module):
@@ -92,7 +99,7 @@ def train_model():
     model = LinearRegression()
     try:
         # 尝试加载之前训练好的模型参数
-        model.load_state_dict(torch.load('.\\机器学习\\linear_regression_model.pth'))  
+        model.load_state_dict(torch.load(model_path))  
     except FileNotFoundError:
         print("No pre-trained model found. Starting training from scratch.")
     # 设置模型为训练模式
@@ -131,7 +138,7 @@ def train_model():
             print(f"\tR2 Score: {r2:.4f}")
 
     # 保存最终模型参数
-    torch.save(model.state_dict(), '.\\机器学习\\linear_regression_model.pth')
+    torch.save(model.state_dict(), model_path)
     print_model_parameters(model)
 
 def evaluate_model():
@@ -148,7 +155,7 @@ def evaluate_model():
     
     # 创建模型实例并加载训练好的参数
     model = LinearRegression()
-    model.load_state_dict(torch.load('.\\机器学习\\linear_regression_model.pth'))
+    model.load_state_dict(torch.load(model_path))
     model.eval()  # 设置模型为评估模式
     
     # 输入至模型，得到预测结果
@@ -166,8 +173,40 @@ def evaluate_model():
     print(f"\tMean Absolute Error: {mae:.4f}")
     print(f"\tR2 Score: {r2:.4f}")
 
+def visualize_predictions():
+    import matplotlib.pyplot as plt
+    # 读取测试数据
+    _, test_data = load_data()
+    # 获取特征列
+    features = [col for col in test_data.columns if col != 'price']
+    # 输入至特征，转为张量x
+    x = torch.tensor(test_data[features].values, dtype=torch.float32)
+    # 输入至目标变量，转为张量y
+    y = torch.tensor(test_data['price'].values, dtype=torch.float32).unsqueeze(1)  # 转为列向量
+    # 创建模型实例并加载训练好的参数
+    model = LinearRegression()
+    model.load_state_dict(torch.load(model_path))
+    model.eval()  # 设置模型为评估模式
+    # 输入至模型，得到预测结果
+    with torch.no_grad():
+        h = model(x)
+    # 可视化真实值与预测值
+    plt.figure(figsize=(8, 6))
+    plt.scatter(y.numpy(), h.numpy(), alpha=0.5)
+    # 添加y=x参考线（理想情况下所有点应位于此线上）
+    plt.plot([y.min(), y.max()], [y.min(), y.max()], 'r--') 
+    # 设置坐标轴范围
+    plt.xlim(0, 200)
+    plt.ylim(0, 200)
+    # 设置坐标轴标签和标题
+    plt.xlabel('Actual Price')
+    plt.ylabel('Predicted Price')
+    plt.title('Actual vs Predicted Prices')
+    plt.show()
+
 if __name__ == '__main__':
     preprocess_data()
-    train_model()
+    # train_model()
     evaluate_model()
+    visualize_predictions()
     
