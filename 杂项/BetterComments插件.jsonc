@@ -122,7 +122,7 @@ ha 恶搞注释，ha -> hahaha
         // AI推荐效果
         {
             "tag": "fx",
-            "color": "#FF5555",
+            "color": "#F5555F",
             "strikethrough": false,
             "underline": false,
             "backgroundColor": "transparent",
