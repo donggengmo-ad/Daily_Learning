@@ -45,6 +45,6 @@ pattern = "price is (.*), but"
 match = re.findall(pattern, text)
 print(match)  # 输出: ['100, $200, and $300']
 # 抓小
-pattern = "\$(.*?), "
+pattern = "\\$(.*?), "
 matches = re.findall(pattern, match[0])
 print(matches)  # 输出: ['100', '200', '300']

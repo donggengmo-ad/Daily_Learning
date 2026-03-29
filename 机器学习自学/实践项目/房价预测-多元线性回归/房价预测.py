@@ -29,7 +29,7 @@ from sklearn.model_selection import train_test_split
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-data_path_upper = os.path.join(BASE_DIR, 'data', 'kagglehub', 'houseprice')+'/'
+data_path_upper = os.path.join(BASE_DIR, 'data', 'kagglehub', 'houseprice') + '/'
 model_path = os.path.join(BASE_DIR, 'linear_regression_model.pth')
 
 def preprocess_data():
