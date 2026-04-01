@@ -1,5 +1,6 @@
-import matplotlib.pyplot as plt
 import pandas as pd
+import openpyxl
+import matplotlib.pyplot as plt
 
 Um_list = [66.5, 65.5, 62.7, 58.5, 53.4, 47.8, 37.0, 32.3, 28.1, 24.5]
 x_list = [0.01, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09]
@@ -19,7 +20,13 @@ for i, (Um,x) in enumerate(zip(Um_list, x_list)):
 table = list(zip(x_list, BmCe_list, BmJi_list, Er_list))
 df = pd.DataFrame(table, columns=['x', 'Bm测', 'Bm计', 'Er'])
 df = df.round(4)
-df.plot(x='x', y=['Bm测', 'Bm计'], kind='line')
-df.to_csv('results.csv', index=False)
+df.to_excel('非均匀磁场.xlsx', index=False)
+
+df.plot(x='x', y=['Bm测', 'Bm计'], kind='line', marker='o')
+plt.xlabel('x')
+plt.ylabel('Bm')
+plt.title('非均匀磁场测量与计算结果')
+plt.legend()
+plt.grid()
 
 plt.show()
