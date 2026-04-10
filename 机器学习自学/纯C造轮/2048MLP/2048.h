@@ -14,7 +14,7 @@ typedef enum {
 extern int block[4][4];
 extern int merge_count; // 记录每次移动的合并次数（奖励函数用）
 
-// ========== 神经网络参数配置（新增） ==========
+//  神经网络参数配置
 #define INPUT_LAYER_SIZE 16    // 输入层：4x4网格=16个神经元
 #define HIDDEN_LAYER_SIZE 32   // 隐藏层神经元数（可调）
 #define OUTPUT_LAYER_SIZE 4    // 输出层：上下左右4个方向
@@ -40,7 +40,7 @@ typedef struct {
     float delta_output[OUTPUT_LAYER_SIZE];
 } NeuralNetwork;
 
-// ========== 神经网络函数声明（新增） ==========
+//  神经网络函数声明
 void nn_init(NeuralNetwork *nn); // 初始化神经网络（随机权重和偏置）
 void nn_forward(NeuralNetwork *nn, float *input, int activation_type); // 前向传播
 void nn_backward_rl(NeuralNetwork *nn, int action_idx, float reward, float

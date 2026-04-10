@@ -1,0 +1,1 @@
+{"name":"Local: test","url":"/Users/alexdong/Programme/Daily_Learning/算法自学/算法理论/双指针/test.cpp","tests":[{"id":1775824314595,"input":"12 5\n2 5 3 1 3 2 4 1 1 5 4 3","output":"2 7"}],"interactive":false,"memoryLimit":1024,"timeLimit":3000,"srcPath":"/Users/alexdong/Programme/Daily_Learning/算法自学/算法理论/双指针/test.cpp","group":"local","local":true}
