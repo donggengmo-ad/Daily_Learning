@@ -32,6 +32,7 @@ using namespace std;
 //也可以用来定义常用类型的别名
 using ll = long long; //定义ll为long long类型的别名
 using pii = pair<int,int>; //定义pii为pair<int,int>类型的别名
+using i128 = __int128; //定义i128为__int128类型的别名（GCC/Clang专用）
 
 int main(){ 
 

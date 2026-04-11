@@ -13,7 +13,8 @@ using namespace std;
 */
 
 //# 桶排序
-//$ 时间复杂度：O(n+k)，空间复杂度：O(n+k)，k-桶数量
+//$ 时间复杂度：O(n+k)，空间复杂度：O(n+k)，k-桶数量，稳定
+//? 将元素分布到k个桶中，要求整体递增，对各桶内部排序，再按顺序放回原数组
 void bucketSort(int arr[], int n, int k){
     // 创建k个桶
     vector<vector<int>> bucket(k);
@@ -41,7 +42,8 @@ void bucketSort(int arr[], int n, int k){
 }
 
 //# 计数排序（每个桶只放相同数的 桶排序）
-//$ 时间复杂度：O(n+k)，空间复杂度：O(k)，k-数值范围
+//$ 时间复杂度：O(n+k)，空间复杂度：O(k)，k-数值范围，稳定
+//? 创建一个计数器，下标代表数值，统计每个数出现的次数，再按顺序放回原数组
 void countingSort(int arr[], int n){
     // 创建计数器
     int min = arr[0], max = arr[0];
@@ -61,7 +63,8 @@ void countingSort(int arr[], int n){
 }
 
 //# 基数排序（进制数个桶的 桶排序 做位数次）
-//$ 时间复杂度：O(d*(n+k))，空间复杂度：O(n+k)，d-位数，k-数值范围
+//$ 时间复杂度：O(d*(n+k))，空间复杂度：O(n+k)，d-位数，k-数值范围，稳定
+//? 按位数依次排序，从低位到高位，每次对当前位数使用计数排序
 void radixSort(int arr[], int n){
     // 找到最大值
     int max = arr[0];
@@ -84,4 +87,13 @@ void radixSort(int arr[], int n){
         // 尝试更高位
         base *= 10;
     }
+}
+
+int main(){
+    int arr[] = {9,3,6,1,2,6,9,10};
+    
+    radixSort(arr, 8);
+    for(int a:arr) cout << a << ' ';
+
+    return 0;
 }
