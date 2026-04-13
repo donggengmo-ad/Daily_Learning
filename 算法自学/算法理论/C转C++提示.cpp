@@ -36,6 +36,10 @@ using i128 = __int128; //定义i128为__int128类型的别名（GCC/Clang专用�
 
 int main(){ 
 
+//# 流式加速
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+
 //# 流式输入输出
 
     //*标准用法
