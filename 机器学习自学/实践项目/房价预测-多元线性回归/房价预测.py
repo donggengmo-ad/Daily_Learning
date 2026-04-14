@@ -101,7 +101,7 @@ def train_model():
         # 尝试加载之前训练好的模型参数
         model.load_state_dict(torch.load(model_path))  
     except FileNotFoundError:
-        print("No pre-trained model found. Starting training from scratch.")
+        print("No pre-trained models found. Starting training from scratch.")
     # 设置模型为训练模式
     model.train()  
     
