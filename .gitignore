@@ -2,7 +2,9 @@
 # 1. 通用系统文件（所有环境通用）
 # ==============================================
 .DS_Store
-**/.DS_Store      
+**/.DS_Store 
+*.DS_Store  
+*/.DS_Store   
 Thumbs.db          
 *.swp              
 *.swo              
@@ -109,16 +111,10 @@ logs/
 # ==============================================
 # 7. 数据文件、机器学习模型
 # ==============================================
-.csv
-.xlsx
-.pkl
-.joblib
+*.csv
+*.xlsx
+*.pkl
+*.joblib
+*.bin
 
-学校课程内容/.DS_Store
-机器学习自学/.DS_Store
-机器学习自学/实践项目/.DS_Store
-机器学习自学/实践项目/阿里移动推荐/.DS_Store
-机器学习自学/实践项目/二手车价预测/data/used_car_sample_submit.csv
-机器学习自学/实践项目/二手车价预测/data/used_car_testA.csv
-机器学习自学/实践项目/二手车价预测/data/used_car_testB.csv
-机器学习自学/实践项目/二手车价预测/data/used_car_train.csv
+

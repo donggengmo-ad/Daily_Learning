@@ -5,9 +5,9 @@
 using namespace std;
 using ll = long long;
 
-// 采用vector<int>来存储大数，每个元素存储一位数字，比string更方便运算
-// 按位反着存，最低位在头，最高位在尾
-// 相当于 sum(a[i] * 10^i)
+//# 采用vector<int>来存储大数，每个元素存储一位数字，比string更方便运算
+//_ 按位反着存，最低位在头，最高位在尾
+//% 相当于 sum(a[i] * 10^i)
 // eg. 1234 -> {4, 3, 2, 1}
 
 // 输入输出
