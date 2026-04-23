@@ -1,37 +1,42 @@
 #include <iostream>
 #include <vector>
-#include <algorithm>
 using namespace std;
 using ll = long long;
-vector<int> add(vector<int> a, vector<int> b){
-    int n = max(a.size(), b.size());
-    reverse(a.begin(), a.end());
-    reverse(b.begin(), b.end());
-    vector<int> res;
-    for(int i = 0;i < n;i++){
-        if(a.size() <= i) res.push_back(b[i]);
-        else if(b.size() <= i) res.push_back(a[i]);
-        else res.push_back(a[i] + b[i]);
-    }
-    for(int i = 0;i < res.size();i++){
-        if(res[i] < 10) continue;
-        res[i] %= 10;
-        if(i < n - 1) res[i+1]++;
-        else res.push_back(1);        
-    }
-    reverse(res.begin(), res.end());
-    return res;
+
+void F(string &s){
+    ll len = s.length();
+    s += s[len-1];
+    for(ll i = 0;i < len - 1;i++) s += s[i];
 }
-ll mod(vector<int> a, ll modn){
-    ll res = 0;
-    for(int i:a){
-        res = (res * 10 + i) % modn;
+
+ll halfpos(ll n, ll slen){
+    ll pow2x = 1, x = 0;
+    while(n >= slen * pow2x){
+        pow2x *= 2;
+        x++;
     }
-    return res;
+    ll len = slen * (pow2x / 2);
+    n -= len;
+    n--;
+    if(n < 0) n = len - 1;
+    return n;
 }
+
 int main(){
-    vector<int> a = {1,0,0,0,0,0,7};
-    ll res = mod(a, 1000000);
-    cout << res;
+    string s;
+    ll n;
+    cin >> s >> n;
+    ll m = n, len = s.length();
+    n--;
+    if(n < 0){
+        cout << s[0] << endl;
+        return 0;
+    }
+
+    while(n >= len) n = halfpos(n, len);
+    cout << s[n] << endl;
+
+    while(s.length() < m) F(s);
+    cout << s[m-1] << endl;
     return 0;
 }
