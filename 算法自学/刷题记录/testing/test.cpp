@@ -1,15 +1,24 @@
 #include <iostream>
 #include <vector>
-#include <algorithm>
 using namespace std;
-
+vector<int> a;
+int f(int len){
+    int res = 0;
+    for(int i = 0;i < a.size();i++) res += a[i] / len;
+    return res;
+}
 int main(){
-    int n, sum = 0;
-    cin >> n;
-    vector<int> a(n);
-    for(int i = 0;i < n;i++) cin >> a[i];
-    sort(a.begin(), a.end());
-    for(int i = 0;i < n - 1;i++) sum += a[i+1] += a[i];
-    cout << sum << endl;
+    int n, k, maxl = 0;
+    cin >> n >> k;
+    a.assign(n, 0);
+    for(int i = 0;i < n;i++) cin >> a[i], maxl = max(maxl, a[i]);
+    int l = 1, r = maxl, mid;
+    while(l < r){
+        mid = l + (r - l + 1) / 2;
+        if(f(mid) >= k) l = mid;
+        else r = mid - 1;
+    }
+    if(f(l) != k) l = 0;
+    cout << l << endl;
     return 0;
 }
