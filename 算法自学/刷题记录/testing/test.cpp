@@ -1,24 +1,29 @@
 #include <iostream>
 #include <vector>
+#include <algorithm>
 using namespace std;
+int m, n;
 vector<int> a;
-int f(int len){
-    int res = 0;
-    for(int i = 0;i < a.size();i++) res += a[i] / len;
-    return res;
+bool takable(int x){
+    int taken = 0, cur = 0;
+    for(int i = 1;i <= n + 1;i++){
+        if(a[i] - a[cur] >= x) cur = i;
+        else taken++;
+    }
+    return m >= taken;
 }
 int main(){
-    int n, k, maxl = 0;
-    cin >> n >> k;
-    a.assign(n, 0);
-    for(int i = 0;i < n;i++) cin >> a[i], maxl = max(maxl, a[i]);
-    int l = 1, r = maxl, mid;
+    int len;
+    cin >> len >> n >> m;
+    a.assign(n + 2, 0);
+    for(int i = 1;i <= n;i++) cin >> a[i];
+    a[n + 1] = len;
+    int l = 1, r = n + 1, mid = n / 2;
     while(l < r){
         mid = l + (r - l + 1) / 2;
-        if(f(mid) >= k) l = mid;
+        if(takable(mid)) l = mid;
         else r = mid - 1;
     }
-    if(f(l) != k) l = 0;
-    cout << l << endl;
+    cout << l;
     return 0;
 }
