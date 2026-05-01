@@ -1,53 +1,37 @@
 #include <iostream>
 #include <vector>
-#include <stack>
+#include <queue>
+#include <unordered_map>
 using namespace std;
-
+struct Boat{
+    int t, k;
+    vector<int> x;
+};
 int main(){
-    stack<int> st;
-    while(1){
-        char c;
-        cin >> c;
-        if(c == '@') break;
-        if(c == '.') continue;
-        if(c <= '9' && c >= '0'){
-            int num = c - '0';
-            while(1){
-                cin >> c;
-                if(c == '.') break;
-                num = num * 10 + c - '0';
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    int n;
+    cin >> n;
+    queue<Boat> boats;
+    unordered_map<int, int> cnts;
+    for(int i = 0;i < n;i++){
+        Boat b;
+        cin >> b.t >> b.k;
+        b.x.resize(b.k);
+        for(int j = 0;j < b.k;j++) {
+            cin >> b.x[j];
+            if(cnts.count(b.x[j])) cnts[b.x[j]]++;
+            else cnts[b.x[j]] = 1;
+        }
+        boats.push(b);
+        while(!boats.empty() && b.t - boats.front().t >= 86400){
+            for(int c:b.x) {
+                if(cnts.count(c)) cnts[c]--;
+                if(cnts[c] <= 0) cnts.erase(c);
             }
-            st.push(num);
-        } 
-        else if(c == '+'){
-            int num = st.top();
-            st.pop();
-            num += st.top();
-            st.pop();
-            st.push(num);
+            boats.pop();
         }
-        else if(c == '-'){
-            int num = st.top();
-            st.pop();
-            num = st.top() - num;
-            st.pop();
-            st.push(num);
-        }
-        else if(c == '*'){
-            int num = st.top();
-            st.pop();
-            num *= st.top();
-            st.pop();
-            st.push(num);
-        }
-        else if(c == '/'){
-            int num = st.top();
-            st.pop();
-            num = st.top() / num;
-            st.pop();
-            st.push(num);
-        }
+        cout << cnts.size() << '\n';
     }
-    cout << st.top();
     return 0;
 }

@@ -1,5 +1,8 @@
 # COW
 ——*[洛谷P3612](https://www.luogu.com.cn/problem/P3612)*
+## 目录
+[TOC]
+
 ## 题目
 给定一个字符串 $s$
 令 $F(s)$ 为 $s$ 后接 $s$ 向右“旋转”一个字符的结果
