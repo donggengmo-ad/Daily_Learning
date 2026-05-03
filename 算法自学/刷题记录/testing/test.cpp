@@ -1,37 +1,25 @@
 #include <iostream>
 #include <vector>
-#include <queue>
-#include <unordered_map>
 using namespace std;
-struct Boat{
-    int t, k;
-    vector<int> x;
+
+struct Node{
+    int data;
+    int parent;
 };
+int pow2(int p){
+    int res = 1, a = 2;
+    while(p > 0){
+        if(p & 1) res *= a;
+        a *= a;
+        p >>= 1;
+    }
+    return res;
+}
+
 int main(){
-    ios::sync_with_stdio(0);
-    cin.tie(0);
     int n;
     cin >> n;
-    queue<Boat> boats;
-    unordered_map<int, int> cnts;
-    for(int i = 0;i < n;i++){
-        Boat b;
-        cin >> b.t >> b.k;
-        b.x.resize(b.k);
-        for(int j = 0;j < b.k;j++) {
-            cin >> b.x[j];
-            if(cnts.count(b.x[j])) cnts[b.x[j]]++;
-            else cnts[b.x[j]] = 1;
-        }
-        boats.push(b);
-        while(!boats.empty() && b.t - boats.front().t >= 86400){
-            for(int c:b.x) {
-                if(cnts.count(c)) cnts[c]--;
-                if(cnts[c] <= 0) cnts.erase(c);
-            }
-            boats.pop();
-        }
-        cout << cnts.size() << '\n';
-    }
+    cout << pow2(n);
+    //vector<Node> a(pow2(n));
     return 0;
 }
