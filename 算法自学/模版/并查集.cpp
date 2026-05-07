@@ -15,9 +15,10 @@ struct UF{
     }
     int find(int x){
         if(p[x] != x){
-            int t = find(p[x]);
-            w[x] += w[p[x]];
-            p[x] = t;
+            int fa = p[x];
+            int rt = find(fa);
+            w[x] += w[fa];
+            p[x] = rt;
         }
         return p[x];
     }
