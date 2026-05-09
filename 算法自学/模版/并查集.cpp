@@ -4,12 +4,12 @@ using namespace std;
 
 // 仅支持数值类型
 template<typename T = int>
-struct UF{
+struct DSU{
     int n;
     vector<int> p, h, sz;
     vector<T> w;
     // 输入真实大小，自动转1-base
-    UF(int n): 
+    DSU(int n): 
         n(n), p(n + 1), h(n + 1, 0), sz(n + 1, 1), w(n + 1, T(0)){
         for(int i = 1; i <= n; i++) p[i] = i;
     }
