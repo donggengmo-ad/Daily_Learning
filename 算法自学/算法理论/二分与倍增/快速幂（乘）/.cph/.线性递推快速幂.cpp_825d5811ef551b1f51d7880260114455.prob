@@ -1,1 +1,0 @@
-{"name":"Local: 线性递推快速幂","url":"/Users/alexdong/Programme/Daily_Learning/算法自学/算法理论/快速幂（乘）/线性递推快速幂.cpp","tests":[{"id":1776862974363,"input":"3\n6\n8\n10\n","output":"4\n9\n19\n"}],"interactive":false,"memoryLimit":1024,"timeLimit":3000,"srcPath":"/Users/alexdong/Programme/Daily_Learning/算法自学/算法理论/快速幂（乘）/线性递推快速幂.cpp","group":"local","local":true}
