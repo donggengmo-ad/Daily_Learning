@@ -1,1 +1,0 @@
-{"name":"Local: 埃氏筛素数","url":"/Users/alexdong/Programme/Daily_Learning/算法自学/算法理论/筛素数/埃氏筛素数.cpp","tests":[{"id":1775723700877,"input":"100 5\n1\n2\n3\n4\n5","output":"2\n3\n5\n7\n11"}],"interactive":false,"memoryLimit":1024,"timeLimit":3000,"srcPath":"/Users/alexdong/Programme/Daily_Learning/算法自学/算法理论/筛素数/埃氏筛素数.cpp","group":"local","local":true}

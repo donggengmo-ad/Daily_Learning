@@ -47,9 +47,9 @@ void build(int n){
     // 状态转移
     for(int k = 1;K < LOG;k++)
         // 区间尾不能越界
-        for(int i = 0;i + (1<<k) - 1 < n;i++)
+        for(int i = 0;i+(1<<k)-1 < n;i++)
             // 从两个次级区间中选最大值
-            st[i][k] = max(st[i][k-1], st[i+(1<<k)+1][k-1]);
+            st[i][k] = max(st[i][k-1], st[i+(1<<(k-1))][k-1]);
 }
 void query(int l, int r){
     // 长度r-l+1，用两个长度log2(r-l+1)的区间覆盖
