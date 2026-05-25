@@ -1,16 +1,15 @@
 #include <iostream>
 #include <vector>
 using namespace std;
+using ll = long long;
 
-// 仅支持数值类型
-template<typename T = int>
 struct DSU{
     int n;
     vector<int> p, h, sz;
-    vector<T> w;
+    vector<ll> w;
     // 输入真实大小，自动转1-base
     DSU(int n): 
-        n(n), p(n + 1), h(n + 1, 0), sz(n + 1, 1), w(n + 1, T(0)){
+        n(n), p(n + 1), h(n + 1, 0), sz(n + 1, 1), w(n + 1, 0){
         for(int i = 1; i <= n; i++) p[i] = i;
     }
     int find(int x){
@@ -23,7 +22,7 @@ struct DSU{
         return p[x];
     }
     // w0: y->x 权值
-    void unite(int x, int y, T w0 = 0){
+    void unite(int x, int y, ll w0 = 0){
         int rx = find(x), ry = find(y);
         if(rx != ry){
             if(h[rx] < h[ry]){
@@ -43,14 +42,14 @@ struct DSU{
         return find(x) == find(y);
     }
     // 返回 y->x 权值，不连通返回 -1
-    T query(int x, int y){
+    ll query(int x, int y){
         int rx = find(x), ry = find(y);
-        if(rx != ry) return T(-1);
+        if(rx != ry) return -1;
         return w[y] - w[x];
     }
     void reset(){
         for(int i = 1; i <= n; i++) 
-            p[i] = i, w[i] = T(0), h[i] = 0, sz[i] = 1;
+            p[i] = i, w[i] = 0, h[i] = 0, sz[i] = 1;
     }
 };
 
