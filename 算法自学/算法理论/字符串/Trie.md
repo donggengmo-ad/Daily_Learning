@@ -68,8 +68,32 @@ bool find(string s){
     return trie[p].in;
 }
 ```
+### 删除
+- 额外维护计数器 `pass` 表示经过某个节点的次数
+- 删除时把路径上的计数器减一
+```cpp
+void del(const string &s){
+    // 当前树上位置
+    int p = 0;
+    // 遍历字符
+    for(char c : s){
+        // 不存在则不用删除
+        if(!trie[p].next.count(c)) return;
+        // 移动到子节点
+        p = trie[p].next[c];
+        // 统计经过次数
+        trie[p].pass--;
+    }
+    // 删除可接受状态
+    trie[p].in = false;
+}
+```
 
 ## 复杂度
 - 空间复杂度：$O(n)$，$n$为字符集的大小
 - 时间复杂度：$O(m)$，$m$为待查询字符串的长度
 
+# 应用
+- **前缀匹配**：Trie前缀遍历可以快速检索字符串
+- **01Trie**：存储二进制数，用于求解异或问题
+- **字典序排序**：Trie前序遍历就是字典序

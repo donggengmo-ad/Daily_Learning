@@ -1,8 +1,32 @@
-#include <iostream>
 #include <vector>
 using namespace std;
 using ll = long long;
 
+// 无权并查集（有路径压缩、按秩合并）
+struct DSU{
+    int n;
+    vector<int> p, h;
+    // 输入真实大小，自动转1-base
+    DSU(int n): n(n), p(n + 1), h(n + 1, 0){
+        for(int i = 1; i <= n; i++) p[i] = i;
+    }
+    int find(int x){
+        if(p[x] != x) p[x] = find(p[x]);
+        return p[x];
+    }
+    void unite(int x, int y){
+        int rx = find(x), ry = find(y);
+        if(rx != ry){
+            if(h[rx] < h[ry]) p[rx] = ry;
+            else p[ry] = rx, h[rx] += h[rx] == h[ry];
+        }
+    }
+    bool same(int x, int y){
+        return find(x) == find(y);
+    }
+};
+
+// 带权并查集
 struct DSU{
     int n;
     vector<int> p, h, sz;

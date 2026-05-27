@@ -1,9 +1,8 @@
-#include <iostream>
 #include <vector>
 using namespace std;
 using ll = long long;
 
-// 维护前缀和模板
+// 维护前缀和为例
 struct BIT{
     vector<ll> t;
     BIT(int n): t(n + 1, 0) {}

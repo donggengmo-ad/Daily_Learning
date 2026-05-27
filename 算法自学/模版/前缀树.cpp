@@ -1,4 +1,3 @@
-#include <iostream>
 #include <vector>
 #include <string>
 #include <unordered_map>
@@ -7,6 +6,7 @@ using namespace std;
 struct Trie{
     struct Node{
         bool in = false;
+        int pass = 0;
         unordered_map<char, int> next;
     };
     vector<Node> t;
@@ -19,6 +19,7 @@ struct Trie{
                 t.emplace_back();
             }
             p = t[p].next[c];
+            t[p].pass++;
         }
         t[p].in = true;
     }
@@ -26,10 +27,19 @@ struct Trie{
     bool find(const string &s){
         int p = 0;
         for(char c: s){
-            if(!t[p].next.count(c)) return false;
+            if(!t[p].next.count(c) || !t[p].pass) return false;
             p = t[p].next[c];
         }
         return t[p].in;
+    }
+    void del(const string &s){
+        int p = 0;
+        for(char c: s){
+            if(!t[p].next.count(c) || !t[p].pass) return;
+            p = t[p].next[c];
+            t[p].pass--;
+        }
+        t[p].in = false;
     }
 };
 
