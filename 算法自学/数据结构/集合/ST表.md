@@ -20,13 +20,13 @@ $F_{i,j} = max(F_{i,j-1}, F_{i+2^{j-1},j-1})$
 
 ### 查询
 - **区间**：$[l, r],\space n = l - r + 1 $
-- 用两个长度为 $\log n$ 的区间覆盖 $[l, r]$
-- $ans = max(F_{l,\log n}, F_{r-2^{\log n} + 1, \log n})$
+- 用两个长度为 $2^{\lfloor \log n \rfloor}$ 的区间覆盖 $[l, r]$
+- $ans = max(F_{l,2^{\lfloor\log n\rfloor}}, F_{r-2^{\lfloor\log n\rfloor} + 1, 2^{\lfloor\log n\rfloor}})$
 
 ||$l$|-|-|-|$r$|
 |-|-|-|-|-|-|
-|1|$[l, l+2^{\log n} - 1$]||||-
-|2|-|$[r-2^{\log n} + 1, r]$
+|1|$[l, l+2^{\lfloor\log n\rfloor} - 1$]||||-
+|2|-|$[r-2^{\lfloor\log n\rfloor} + 1, r]$
 
 
 ## 代码
