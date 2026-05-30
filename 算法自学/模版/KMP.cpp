@@ -4,13 +4,18 @@ using namespace std;
 
 struct KMP{
     string p; //模式串
-    vector<int> next;
-    KMP(const string &p): p(p), next(p.size(), -1){}
+    vector<int> next, nextval;
+    KMP(const string &p): 
+       p(p), next(p.size(), -1), nextval(p.size(), -1) {}
     void buildNext(){
         int i = 0, j = -1;
         while(i < p.size()){
             if(j == -1 || p[i] == p[j]) next[++i] = ++j;
             else j = next[j];
+        }
+        for(int i = 1;i < p.size();i++){
+            if(p[i] == p[next[i]]) nextval[i] = nextval[next[i]];
+            else nextval[i] = next[i];
         }
     }
     // 匹配第一个
@@ -18,7 +23,7 @@ struct KMP{
         int i = 0, j = 0;
         while(i < s.size() && j < p.size()){
             if(j == -1 || s[i] == p[j]) i++, j++;
-            else j = next[j];
+            else j = nextval[j];
         }
         if(j == p.size()) return i - j;
         else return -1;
@@ -35,7 +40,7 @@ struct KMP{
                     j = next[j];
                 }
             }
-            else j = next[j];
+            else j = nextval[j];
         }
         return res;
     }

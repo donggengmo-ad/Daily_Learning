@@ -85,16 +85,14 @@
 void get_fail(){
     trie[0].fail = 0;
     queue<int> q;
-    // 处理第一层（依旧26只是示范）
-    for(int c = 0;c < 26;c++){
-        int v = trie[0].next[c];
+    // 处理第一层
+    for(int v: trie[0].next){
         if(v){
             // 不为空正常处理
             trie[v].fail = 0;
             q.push(v);
         }
-        // 空 next 直接指向根
-        else trie[0].next[c] = 0;
+        // 空 next 直接指向根，这里不用改
     }
     while(!q.empty()){
         int u = q.front();
@@ -109,7 +107,7 @@ void get_fail(){
                 q.push(v);
             }
             // 空 next 指向 fp 的 c 子节点，会一路引导向 c 第一次出现的地方
-            else trie[u].fail = trie[fp].next[c];
+            else trie[u].next[c] = trie[fp].next[c];
         }
     }
 }
@@ -131,5 +129,62 @@ int match(string &s){
 ```
 
 ## last 优化
-### TODO
+### 优化
+每次匹配时统计 fail 链上，会经过很多不为模式串结尾的无意义节点，可以使用 last 指针优化
 
+### 定义
+last[u] 表示 u 的fail 链上第一个为模式串结尾
+$$last[u] = \begin{cases}
+    fail[u] & \text{fail[u] 为模式串结尾} \\
+    last[fail[u]] & \text{fail[u] 不为模式串结尾}
+\end{cases}$$
+
+### 构建 last 指针
+BFS时顺便构建 last 指针
+```cpp
+void get_fail_last(){
+    trie[0].fail = 0;
+    queue<int> q;
+    for(int v: trie[0].next){
+        if(v){
+            trie[v].fail = 0;
+            // 第一次 last 指向根
+            trie[v].last = 0;
+            q.push(v);
+        }
+    }
+    while(!q.empty()){
+        int u = q.front();
+        q.pop();
+        for(int c = 0;c < 26;c++){
+            int v = trie[u].next[c];
+            int fp = trie[u].fail;
+            if(v){
+                trie[v].fail = trie[fp].next[c];
+                // 如果 fail[u] 为模式串结尾，last[u] 为 fail[u]
+                int fv = trie[v].fail;
+                if(trie[fv].end) trie[v].last = fv;
+                // 不是结尾，则继承 fail[u] 的 last，引导向第一个结尾
+                else trie[v].last = trie[fv].last;
+                q.push(v);
+            }
+            else trie[u].next[c] = trie[fp].next[c];
+        }
+    }
+}
+```
+
+### 匹配
+统计时沿 last 链统计就好
+```cpp
+int match(string &s){
+    int p = 0, res = 0;
+    for(char c: s){
+        p = trie[p].next[c-'a'];
+        // 沿 last 链统计，也可维护其他信息
+        for(int i = p;i;i = trie[i].last)
+            res += trie[i].end;
+    }
+    return res;
+}
+```
