@@ -76,8 +76,8 @@ Trie 中存储模式串 `he`、`his`、`him`、`she`、`her`
 存在每个 Trie 节点里
 ```cpp
 struct Node{
-    int fail;
-    bool end;
+    int fail = 0; // 默认指向根节点
+    bool end = false;
     vector<int> next;
 };
 vector<Node> trie;
@@ -94,17 +94,12 @@ vector<Node> trie;
 ### 代码
 ```cpp
 void get_fail(){
-    // 设置根节点 fail 指针指向自己
-    trie[0].fail = 0;
-    // BFS 遍历 Trie
     queue<int> q;
     // 处理第一层（fail跳转层数不减，与后续逻辑不兼容）
-    for(int v: trie[0].next){
-        if(v){
-            trie[v].fail = 0;
-            q.push(v);
-        }
-    }
+    for(int v: trie[0].next)
+        // fail 已默认为根节点，直接入队
+        if(v) q.push(v);
+    // BFS 遍历 Trie
     while(!q.empty()){
         int u = q.front();
         q.pop();

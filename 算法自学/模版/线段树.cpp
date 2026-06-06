@@ -76,7 +76,3 @@ struct SegTree{
         return query(idx, idx);
     }
 };
-
-int main(){
-    return 0;
-}

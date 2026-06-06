@@ -83,17 +83,9 @@
 ### 构建 fail 指针
 ```cpp
 void get_fail(){
-    trie[0].fail = 0;
     queue<int> q;
-    // 处理第一层
-    for(int v: trie[0].next){
-        if(v){
-            // 不为空正常处理
-            trie[v].fail = 0;
-            q.push(v);
-        }
-        // 空 next 直接指向根，这里不用改
-    }
+    // 处理第一层，空 next 和 fail 已默认指向根
+    for(int v: trie[0].next) if(v) q.push(v);
     while(!q.empty()){
         int u = q.front();
         q.pop();
@@ -128,7 +120,7 @@ int match(string &s){
 }
 ```
 
-## last 优化
+## last 指针优化
 ### 优化
 每次匹配时统计 fail 链上，会经过很多不为模式串结尾的无意义节点，可以使用 last 指针优化
 
@@ -138,21 +130,20 @@ $$last[u] = \begin{cases}
     fail[u] & \text{fail[u] 为模式串结尾} \\
     last[fail[u]] & \text{fail[u] 不为模式串结尾}
 \end{cases}$$
+```cpp
+struct Node{
+    ...
+    int last = 0;
+};
+```
 
 ### 构建 last 指针
 BFS时顺便构建 last 指针
 ```cpp
 void get_fail_last(){
-    trie[0].fail = 0;
     queue<int> q;
-    for(int v: trie[0].next){
-        if(v){
-            trie[v].fail = 0;
-            // 第一次 last 指向根
-            trie[v].last = 0;
-            q.push(v);
-        }
-    }
+    // 第一层 last 已默认指向根
+    for(int v: trie[0].next) if(v) q.push(v);
     while(!q.empty()){
         int u = q.front();
         q.pop();
@@ -161,7 +152,7 @@ void get_fail_last(){
             int fp = trie[u].fail;
             if(v){
                 trie[v].fail = trie[fp].next[c];
-                // 如果 fail[u] 为模式串结尾，last[u] 为 fail[u]
+                // 如果 fail[u] 为模式串结尾，last[u] 就是 fail[u]
                 int fv = trie[v].fail;
                 if(trie[fv].end) trie[v].last = fv;
                 // 不是结尾，则继承 fail[u] 的 last，引导向第一个结尾
@@ -187,4 +178,100 @@ int match(string &s){
     }
     return res;
 }
+```
+
+## fail 树优化
+### 优化
+统计时，每次要沿 fail 链或 last 链遍历，效率低。可以把所有操作积攒起来，最后统一进行一次统计。
+
+### 定义
+fail 树表示将 fail 链视为有向父边的树，也就是如果 `fail[v] = u`，那么 `u` 就是 `v` 在 fail 树上的子节点
+
+```mermaid
+graph TD
+subgraph fail_tree [fail tree]
+direction BT
+    h1f((h1)) --> Rf((Root))
+    e1f((e1)) --> Rf
+    r1f((r)) --> Rf
+    s1f((s1)) --> Rf
+    h2f((h2)) --> h1f
+    e2f((e2)) --> e1f
+    i1f((i)) --> Rf
+    s2f((s2)) --> Rf
+    mf((m)) --> Rf
+end
+subgraph trie
+direction LR
+    R((Root)) --> h1((h1)) --> e1((e1)) --> r1((r))
+    R --> s1((s1)) --> h2((h2)) --> e2((e2))
+    h1 --> i1((i)) --> s2((s2))
+    i1 --> m1((m))
+end
+trie ==> fail_tree
+```
+> 除非需要复杂树上操作，fail 树并不需要显式构建，直接用 fail 指针简单维护即可
+
+### 拓扑序
+#### 原理
+- 每个节点只受其在 fail 树上的所有子节点影响
+- 因此需要先处理子节点，再处理父节点
+- 即按自底向上的拓扑序处理
+
+#### 获取方式
+- 根据 fail 指针的定义，不难注意到 `fail[u]` 必然比 `u` 的层浅
+> 注意力惊人 :rofl:
+- 因此 Trie 的 BFS 反序就是 fail 树拓扑序
+
+#### 实现
+BSF 构建 fail 指针时顺手反向记录
+```cpp
+// 建议用链表或deque，反向插入效率高
+list<int> order;
+void get_fail(){
+    ...
+    while(!q.empty()){
+        int u = q.front();
+        // 出队时头插，反向记录
+        order.push_front(u);
+        ...
+    }
+    ...
+}
+```
+
+### 统计
+#### 原理
+- 每个节点只记录自己被匹配的次数
+- 最后根据拓扑序累加，相当于自底向上对 fail 树做dp
+#### 实现
+- 维护数组记录每个节点被匹配的次数
+- 每次匹配记录当前节点的匹配次数
+- 最后按拓扑序累加
+> 这里代码统计了每个节点的匹配次数，实际上一般要再映射到模式串的编号
+```cpp
+// 注意，order.size() < trie.size()，因为根节点不在拓扑序里
+vector<int> res(trie.size(), 0);
+void match(string &s){
+    // 先正常匹配
+    int p = 0;
+    for(char c: s){
+        p = trie[p].next[c-'a'];
+        // 记录单点信息，而不是遍历 fail 链
+        res[p]++;
+    }
+    // 然后按拓扑序累加
+    for(int i: order) res[trie[i].fail] += res[i];
+}
+```
+
+### 意义
+- 沿 fail 树上升的过程相当于取模式串的某个后缀
+- 每个模式串被匹配时，它的所有后缀也被匹配
+```
+主串          e x a m p l e
+被匹配的模式串    x a m p 
+它的所有后缀        a m p
+                    m p
+                      p
 ```

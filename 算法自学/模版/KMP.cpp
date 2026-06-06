@@ -6,8 +6,8 @@ struct KMP{
     string p; //模式串
     vector<int> next, nextval;
     KMP(const string &p): 
-       p(p), next(p.size(), -1), nextval(p.size(), -1) {}
-    void buildNext(){
+       p(p), next(p.size() + 1, -1), nextval(p.size() + 1, -1) {}
+    void build(){
         int i = 0, j = -1;
         while(i < p.size()){
             if(j == -1 || p[i] == p[j]) next[++i] = ++j;
@@ -53,8 +53,8 @@ struct KMP{
         vector<int> res = matchAll(s);
         return res.size();
     }
+    // 模式串最小周期
+    int minT(){
+        return p.size() - next[p.size()];
+    }
 };
-
-int main(){
-    return 0;
-}
