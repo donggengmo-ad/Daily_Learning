@@ -86,7 +86,7 @@ void dijkstra(int s){
     // 小顶堆存 距离-编号 对
     priority_queue<
        pair<int, int>, 
-       vector<int, int>, 
+       vector<pair<int, int>>, 
        greater<>
     > pq;
     // 初始化距离
@@ -110,6 +110,5 @@ void dijkstra(int s){
             }
         }
     }
-    return dis;
 }
 ```

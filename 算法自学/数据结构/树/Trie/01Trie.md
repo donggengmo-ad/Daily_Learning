@@ -163,13 +163,12 @@ int greater(int x, int p = 0, int i = 31){
 int kth(int k){
     int p = 0, res = 0;
     for(int i = 31;i >= 0;i--){
-        int b = x >> i & 1;
         int go1 = t[p].next[1], go0 = t[p].next[0];
         // t[0].pass = 0，兼容 go0 不存在的情况
         // 去 0 分枝继续找第 k
-        if(t[0].pass >= k) p = go0;
+        if(t[go0].pass >= k) p = go0;
         // 去 1 分枝找第 k - pass_0，更新res
-        else p = go1, k -= t[0].pass, res |= (1 << i);
+        else p = go1, k -= t[go0].pass, res |= (1 << i);
     }
     return res;
 }

@@ -37,7 +37,7 @@ void floyd(){
     // 初始化 dist 和 prev
     dist.assign(n, vector<int>(n, INT_MAX));
     prev.assign(n, vector<int>(n, -1));
-    for(int i = 0;i < n;i++>)
+    for(int i = 0;i < n;i++)
         for(int j = 0;j < n;j++){
             dist[i][j] = G[i][j];
             // 按有向边初始化 prev
