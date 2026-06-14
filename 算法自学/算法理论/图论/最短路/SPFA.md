@@ -30,10 +30,10 @@ Bellman-Ford 算法每次松弛所有边，有很多无效操作
     - 检查负环和队列去重，更新
 
 ## 代码
-[Edge定义](./最短路径.md#edge定义)
+[Node定义](./最短路径.md#node定义)
 ```cpp
-// 边集数组
-vector<Edge> edge;
+// 邻接表
+vector<vector<Node>> adj;
 // 结果
 vector<int> dist, prev;
 // SPFA
@@ -53,7 +53,7 @@ bool SPFA(int n, int s){
         q.pop();
         in_q[u] = false;
         // 遍历所有出边
-        for(auto [u, v, w]: edge)
+        for(auto [v, w]: adj[u])
             // 可以更新
             if(dist[u] + w < dist[v]){
                 dist[v] = dist[u] + w, prev[v] = u;
