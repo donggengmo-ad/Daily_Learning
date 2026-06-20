@@ -9,76 +9,65 @@
 
 ### 示例
 绿色箭头演示部分空 next 引导，其余大多导向根节点
-```tikz
-\begin{tikzpicture}[
-    gray,
-    node/.style={
-        circle, draw,
-        minimum size=9mm,
-        inner sep=1pt,
-    },
-    edge/.style={
-        ->, >=stealth,
-        black!70, thick
-    },
-    fail/.style={
-        ->, >=stealth,
-        thick, dashed,
-        red!70!black
-    },
-    trie-edge/.style={
-        ->, >=stealth,
-        thick, dashed,
-        green!50!black
-    }
-]
 
-\node[node]   (R)    at (0,   0)    {Root};
-\node[node]   (h1)   at (1.5, 1.5)  {h};
-\node[node]   (e1)   at (3,   1.8)  {e};
-\node[node]   (r1)   at (4.5, 1.8)  {r};
-\node[node]   (s1)   at (1.5,-1.5)  {s};
-\node[node]   (h2)   at (3,  -1.8)  {h};
-\node[node]   (e2)   at (4.5,-1.8)  {e};
-\node[node]   (i1)   at (3,   0)    {i};
-\node[node]   (s2)   at (4.5, 0.6)  {s};
-\node[node]   (m1)   at (4.5,-0.6)  {m};
-
-\draw[edge] (R)  -- (h1);
-\draw[edge] (R)  -- (s1);
-\draw[edge] (h1) -- (e1);
-\draw[edge] (e1) -- (r1);
-\draw[edge] (s1) -- (h2);
-\draw[edge] (h2) -- (e2);
-\draw[edge] (h1) -- (i1);
-\draw[edge] (i1) -- (s2);
-\draw[edge] (i1) -- (m1);
-
-\draw[fail, bend left=25]
-    (h2.west) to (h1.east)
-    node[above=2, font=\color{red!70!black}] {fail};
-\draw[fail, bend left=25]
-    (e2.west) to (e1.east)
-    node[above=2, font=\color{red!70!black}] {fail};
-
-\draw[trie-edge, bend left=40]
-    (h1.south) to (s1.north)
-    node[above=20, right=10, font=\color{red!70!black}] {s};
-\draw[trie-edge, bend left=40]
-    (s1.north) to (h1.south)
-    node[above=-40, left=10, font=\color{red!70!black}] {h};
-\draw[trie-edge, bend right=20]
-    (e2.east) to (r1.east)
-    node[above=-40, right=10, font=\color{red!70!black}] {r};
-\draw[trie-edge, bend right=20]
-    (i1.north) to (h1.east)
-    node[above=-20, right=10, font=\color{red!70!black}] {h};
-\draw[trie-edge, bend left=30]
-    (h2.south) to (s1.south)
-    node[above=-2, right=15, font=\color{red!70!black}] {s};
-
-\end{tikzpicture}
-```
+<svg viewBox="0 0 380 460" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .node       { fill: #fafafa; stroke: #999; stroke-width: 1.5; }
+      .node-text  { font-family: sans-serif; font-size: 14px; fill: #333; text-anchor: middle; dominant-baseline: central; }
+      .edge       { fill: none; stroke: #555; stroke-width: 2; }
+      .fail-edge  { fill: none; stroke: #c0392b; stroke-width: 2; stroke-dasharray: 6,4; }
+      .trie-edge  { fill: none; stroke: #2d7d2d; stroke-width: 2; stroke-dasharray: 6,4; }
+      .fail-label { font-family: sans-serif; font-size: 12px; fill: #c0392b; }
+      .trie-label { font-family: sans-serif; font-size: 12px; fill: #2d7d2d; }
+    </style>
+    <!-- Fail edge arrow (red, small) -->
+    <marker id="arrowFail" markerWidth="6" markerHeight="4.5" refX="6" refY="2.25" orient="auto">
+      <polygon points="0,0 6,2.25 0,4.5" fill="#c0392b" />
+    </marker>
+    <!-- Trie edge arrow (dark green, small) -->
+    <marker id="arrowTrie" markerWidth="6" markerHeight="4.5" refX="6" refY="2.25" orient="auto">
+      <polygon points="0,0 6,2.25 0,4.5" fill="#2d7d2d" />
+    </marker>
+  </defs>
+  <!-- Trie edges (back layer) -->
+  <path class="trie-edge" marker-end="url(#arrowTrie)" d="M 120,135 C 150,170 150,250 120,285" />
+  <text class="trie-label" x="150" y="220">s</text>
+  <path class="trie-edge" marker-end="url(#arrowTrie)" d="M 120,285 C 80,250 80,170 120,135" />
+  <text class="trie-label" x="75" y="220">h</text>
+  <path class="trie-edge" marker-end="url(#arrowTrie)" d="M 315,318 C 335,265 335,155 315,102" />
+  <text class="trie-label" x="315" y="220">r</text>
+  <path class="trie-edge" marker-end="url(#arrowTrie)" d="M 210,195 C 185,150 150,135 135,120" />
+  <text class="trie-label" x="180" y="150">h</text>
+  <path class="trie-edge" marker-end="url(#arrowTrie)" d="M 210,333 C 180,340 140,335 120,315" />
+  <text class="trie-label" x="166" y="350">s</text>
+  <!-- Fail edges (middle layer) -->
+  <path class="fail-edge" marker-end="url(#arrowFail)" d="M 195,318 C 160,318 90,200 125,140" />
+  <text class="fail-label" x="100" y="225">fail</text>
+  <path class="fail-edge" marker-end="url(#arrowFail)" d="M 285,318 C 210,318 145,195 200,120" />
+  <text class="fail-label" x="205" y="250">fail</text>
+  <!-- Regular tree edges (no arrows, endpoints slightly inside nodes) -->
+  <line class="edge" x1="30" y1="210" x2="111.5" y2="128.5" />
+  <line class="edge" x1="30" y1="210" x2="111.5" y2="291.5" />
+  <line class="edge" x1="120" y1="120" x2="198.2" y2="104.4" />
+  <line class="edge" x1="210" y1="102" x2="288" y2="102" />
+  <line class="edge" x1="120" y1="300" x2="198.2" y2="315.6" />
+  <line class="edge" x1="210" y1="318" x2="288" y2="318" />
+  <line class="edge" x1="120" y1="120" x2="201.5" y2="201.5" />
+  <line class="edge" x1="210" y1="210" x2="288.8" y2="178.5" />
+  <line class="edge" x1="210" y1="210" x2="288.8" y2="241.5" />
+  <!-- Nodes (top layer) -->
+  <circle class="node" cx="30"  cy="210" r="15" /><text class="node-text" x="30"  y="210">Root</text>
+  <circle class="node" cx="120" cy="120" r="15" /><text class="node-text" x="120" y="120">h</text>
+  <circle class="node" cx="210" cy="102" r="15" /><text class="node-text" x="210" y="102">e</text>
+  <circle class="node" cx="300" cy="102" r="15" /><text class="node-text" x="300" y="102">r</text>
+  <circle class="node" cx="120" cy="300" r="15" /><text class="node-text" x="120" y="300">s</text>
+  <circle class="node" cx="210" cy="318" r="15" /><text class="node-text" x="210" y="318">h</text>
+  <circle class="node" cx="300" cy="318" r="15" /><text class="node-text" x="300" y="318">e</text>
+  <circle class="node" cx="210" cy="210" r="15" /><text class="node-text" x="210" y="210">i</text>
+  <circle class="node" cx="300" cy="174" r="15" /><text class="node-text" x="300" y="174">s</text>
+  <circle class="node" cx="300" cy="246" r="15" /><text class="node-text" x="300" y="246">m</text>
+</svg>
 
 ### 构建 fail 指针
 ```cpp

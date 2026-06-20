@@ -1,6 +1,7 @@
 #include <vector>
 using namespace std;
 using ll = long long;
+
 // 维护区间和为例
 struct BlockArray{
     struct Block{

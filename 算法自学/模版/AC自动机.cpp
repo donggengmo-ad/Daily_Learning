@@ -3,6 +3,7 @@
 #include <queue>
 #include <unordered_map>
 using namespace std;
+
 struct AC{
     struct Node{
         int next[26] = {0}; // 小写字母
@@ -53,7 +54,7 @@ struct AC{
         for(char c: s){
             p = t[p].next[c-'a'];
             for(int u = p;u;u = t[u].last) 
-            res += t[u].cnt; 
+                res += t[u].cnt; 
         }
         return res;
     }

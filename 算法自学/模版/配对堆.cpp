@@ -1,12 +1,16 @@
 #include <vector>
 using namespace std;
 using ll = long long;
+
+// 并查集（略）
 struct DSU{
     DSU(){}
     DSU(int n){}
     int find(int x){}
     void unite(int x, int y){}
 };
+
+// 基础配对堆
 struct PairHeap{
     struct Node{
         ll val = 0;
@@ -61,6 +65,8 @@ struct PairHeap{
         return h[x].val;
     }
 };
+
+// 完整配对堆
 struct Heap{
     PairHeap h;
     DSU s;

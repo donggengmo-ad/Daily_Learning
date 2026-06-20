@@ -19,54 +19,63 @@ Trie 中存储模式串 `he`、`his`、`him`、`she`、`her`
 
 其余节点 fail 指针指向根节点
 
-```tikz
-\begin{tikzpicture}[
-    gray,
-    node/.style={
-        circle, draw,
-        minimum size= 8mm,
-        inner sep=1pt
-    },
-    edge/.style={
-        ->, >=stealth,
-    },
-    fail/.style={
-        ->, >=stealth,
-        thick, dashed,
-        red!70!black
-    },
-]
+<svg viewBox="0 0 380 430" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .node      { fill: #fafafa; stroke: #999; stroke-width: 1.5; }
+      .node-text { font-family: sans-serif; font-size: 14px; fill: #333; text-anchor: middle; dominant-baseline: central; }
+      .edge      { fill: none; stroke: #999; stroke-width: 1.5; }
+      .fail-edge { fill: none; stroke: #c0392b; stroke-width: 2; stroke-dasharray: 6,4; }
+      .fail-label{ font-family: sans-serif; font-size: 12px; fill: #c0392b; }
+    </style>
+    <!-- Regular arrowhead (gray) -->
+    <marker id="arrowGray" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0,0 8,3 0,6" fill="#999" />
+    </marker>
+    <!-- Fail arrowhead (dark red) -->
+    <marker id="arrowRed" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0,0 8,3 0,6" fill="#c0392b" />
+    </marker>
+  </defs>
+  <!-- ===== Fail edges (drawn behind nodes) ===== -->
+  <!-- fail 1: h2.west → h1.east, bend left -->
+  <path class="fail-edge" marker-end="url(#arrowRed)" d="M 196,318 C 130,318 65,210 110,135" />
+  <text class="fail-label" x="110" y="222">fail 1</text>
+  <!-- fail 2: e2.west → e1.east, bend left -->
+  <path class="fail-edge" marker-end="url(#arrowRed)" d="M 286,318 C 220,318 130,200 195,110" />
+  <text class="fail-label" x="200" y="245">fail 2</text>
+  <!-- ===== Regular edges ===== -->
+  <!-- R → h1 -->
+  <line class="edge" marker-end="url(#arrowGray)" x1="30" y1="210" x2="120" y2="120" />
+  <!-- R → s1 -->
+  <line class="edge" marker-end="url(#arrowGray)" x1="30" y1="210" x2="120" y2="300" />
+  <!-- h1 → e1 -->
+  <line class="edge" marker-end="url(#arrowGray)" x1="120" y1="120" x2="210" y2="102" />
+  <!-- e1 → r1 -->
+  <line class="edge" marker-end="url(#arrowGray)" x1="210" y1="102" x2="300" y2="102" />
+  <!-- s1 → h2 -->
+  <line class="edge" marker-end="url(#arrowGray)" x1="120" y1="300" x2="210" y2="318" />
+  <!-- h2 → e2 -->
+  <line class="edge" marker-end="url(#arrowGray)" x1="210" y1="318" x2="300" y2="318" />
+  <!-- h1 → i1 -->
+  <line class="edge" marker-end="url(#arrowGray)" x1="120" y1="120" x2="210" y2="210" />
+  <!-- i1 → s2 -->
+  <line class="edge" marker-end="url(#arrowGray)" x1="210" y1="210" x2="300" y2="174" />
+  <!-- i1 → m1 -->
+  <line class="edge" marker-end="url(#arrowGray)" x1="210" y1="210" x2="300" y2="246" />
+  <!-- ===== Nodes ===== -->
+  <circle class="node" cx="30"  cy="210" r="15" /><text class="node-text" x="30"  y="210">Root</text>
+  <circle class="node" cx="120" cy="120" r="15" /><text class="node-text" x="120" y="120">h</text>
+  <circle class="node" cx="210" cy="102" r="15" /><text class="node-text" x="210" y="102">e</text>
+  <circle class="node" cx="300" cy="102" r="15" /><text class="node-text" x="300" y="102">r</text>
+  <circle class="node" cx="120" cy="300" r="15" /><text class="node-text" x="120" y="300">s</text>
+  <circle class="node" cx="210" cy="318" r="15" /><text class="node-text" x="210" y="318">h</text>
+  <circle class="node" cx="300" cy="318" r="15" /><text class="node-text" x="300" y="318">e</text>
+  <circle class="node" cx="210" cy="210" r="15" /><text class="node-text" x="210" y="210">i</text>
+  <circle class="node" cx="300" cy="174" r="15" /><text class="node-text" x="300" y="174">s</text>
+  <circle class="node" cx="300" cy="246" r="15" /><text class="node-text" x="300" y="246">m</text>
+</svg>
 
-\node[node]   (R)    at (0,   0)    {Root};
-\node[node]   (h1)   at (1.5, 1.5)  {h};
-\node[node]   (e1)   at (3,   1.8)  {e};
-\node[node]   (r1)   at (4.5, 1.8)  {r};
-\node[node]   (s1)   at (1.5,-1.5)  {s};
-\node[node]   (h2)   at (3,  -1.8)  {h};
-\node[node]   (e2)   at (4.5,-1.8)  {e};
-\node[node]   (i1)   at (3,   0)  {i};
-\node[node]   (s2)   at (4.5, 0.6)  {s};
-\node[node]   (m1)   at (4.5,-0.6)  {m};
-
-\draw[edge] (R)  -- (h1);
-\draw[edge] (R)  -- (s1);
-\draw[edge] (h1) -- (e1);
-\draw[edge] (e1) -- (r1);
-\draw[edge] (s1) -- (h2);
-\draw[edge] (h2) -- (e2);
-\draw[edge] (h1) -- (i1);
-\draw[edge] (i1) -- (s2);
-\draw[edge] (i1) -- (m1);
-
-\draw[fail, bend left=25]
-    (h2.west) to (h1.east)
-    node[above=2, font=\color{red!70!black}] {fail 1};
-\draw[fail, bend left=25]
-    (e2.west) to (e1.east)
-    node[above=2, font=\color{red!70!black}] {fail 2};
-
-\end{tikzpicture}
-```
 ### 意义
 沿 `fail` 指针跳转时，
 - 选择前缀中包含已匹配段的模式串，排除了其他不合法的模式串

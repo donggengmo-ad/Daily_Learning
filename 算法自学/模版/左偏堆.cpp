@@ -1,12 +1,14 @@
 #include <vector>
 using namespace std;
 using ll = long long;
+
 // 并查集（略）
 struct DSU{
     DSU(int n){}
     int find(int x){}
     void unite(int x, int y){}
 };
+
 // 基础左偏堆（小顶堆）
 struct LeftHeap{
     struct Node{
@@ -55,6 +57,7 @@ struct LeftHeap{
     void set(int x, ll k){h[x] = Node(k);} // 重置节点
     ll get(int x){return h[x].v;} // 获取节点值
 };
+
 // 完整左偏堆
 struct Heap{
     DSU s;
@@ -91,3 +94,4 @@ struct Heap{
         return h.get(s2h[s.find(x)]);
     }
 };
+
