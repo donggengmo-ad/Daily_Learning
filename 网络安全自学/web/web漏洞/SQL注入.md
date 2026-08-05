@@ -1,4 +1,4 @@
-# SQL注入
+# SQL注入漏洞
 [TOC]
 
 ## SQL基础
@@ -259,7 +259,7 @@ $$ [结束原上下文] \rightarrow [加入攻击表达式] \rightarrow [消除�
     AND (SELECT ASCII(SUBSTRING(password,1,1)) FROM users WHERE username='admin') > 97 --
     ```
 
-4. **盲注**: 进行假设，看能否返回正常页面，逐渐试出目标数据
+3. **盲注**: 进行假设，看能否返回正常页面，逐渐试出目标数据
 
     ```sql
     AND query_condition --
