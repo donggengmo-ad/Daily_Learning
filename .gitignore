@@ -118,3 +118,6 @@ logs/
 *.bin
 
 
+*_api.*
+*_cookies.*
+

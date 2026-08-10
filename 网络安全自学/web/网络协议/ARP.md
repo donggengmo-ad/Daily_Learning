@@ -155,9 +155,9 @@ flowchart LR
 ## 工具
 - `arp`
 
-- [arp-scan](./tools/arp-scan.md)
+- [arp-scan](../tools/arp-scan.md)
 
-- [dsniff](./tools/dsniff.md)
+- [dsniff](../tools/dsniff.md)
 
 - BetterCap
 
