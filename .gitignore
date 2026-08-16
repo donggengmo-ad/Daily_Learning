@@ -116,8 +116,11 @@ logs/
 *.pkl
 *.joblib
 *.bin
+data/
 
-
+# 认证信息
 *_api.*
 *_cookies.*
+
+docs/
 
