@@ -2,6 +2,8 @@ import torch
 import util.plt as myplt
 from IPython import display
 from matplotlib import pyplot as plt
+import numpy as np
+import time
 
 class Accumulator:
     """在 n 个变量上累加"""
@@ -71,3 +73,43 @@ def show_images(imgs, num_rows, num_cols, titles=None, scale=1.5):
         if titles:
             ax.set_title(titles[i])
     return axes
+
+class Timer:  #@save
+    """记录多次运行时间"""
+    def __init__(self):
+        self.times = []
+        self.start()
+
+    def start(self):
+        """启动计时器"""
+        self.tik = time.time()
+
+    def stop(self):
+        """停止计时器并将时间记录在列表中"""
+        self.times.append(time.time() - self.tik)
+        return self.times[-1]
+
+    def avg(self):
+        """返回平均时间"""
+        return sum(self.times) / len(self.times)
+
+    def sum(self):
+        """返回时间总和"""
+        return sum(self.times)
+
+    def cumsum(self):
+        """返回累计时间"""
+        return np.array(self.times).cumsum().tolist()
+
+def try_gpu(i: int=0, mps: bool=True) -> torch.device:
+    """尝试获取设备
+    :param i: GPU 索引
+    :param mps: 是否尝试使用 MPS（Metal Performance Shaders）
+    :return: 可用的设备（GPU、MPS 或 CPU）
+    """
+    if torch.cuda.is_available() and torch.cuda.device_count() >= i + 1:
+        return torch.device(f'cuda:{i}')
+    if mps and torch.backends.mps.is_available():
+        return torch.device('mps')
+    return torch.device('cpu')
+

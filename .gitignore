@@ -117,6 +117,8 @@ logs/
 *.joblib
 *.bin
 data/
+models/
+model/
 
 # 认证信息
 *_api.*

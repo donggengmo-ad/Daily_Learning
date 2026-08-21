@@ -29,11 +29,12 @@ def get_net(in_features: int,
             net.add_module(f'linear_{i}', nn.Linear(dims[i], dims[i+1]))
             if i < len(dims) - 2:
                 net.add_module(f'relu_{i}', nn.ReLU())
-        def init_weights(m):
+        def xavier(m):
+            """xavier 初始化，均值为 0，方差为 2/(n_in+n_out)"""
             if type(m) == nn.Linear:
-                # xavier 初始化，均值为 0，方差为 2/(n_in+n_out)
-                nn.init.normal_(m.weight, std=np.sqrt(2 / (m.in_features + m.out_features)))
-        net.apply(init_weights)
+                nn.init.xavier_uniform_(m.weight)
+        net.apply(xavier)
+    net = net.to(device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
     return net
 
 def train_ones(net,
@@ -163,7 +164,7 @@ def train_and_pred(train_features, test_features,
                              weight_decay=weight_decay)
     print(f'训练 log rmse {float(train_ls[-1]):f}')
     # 预测
-    preds = net(test_features).detach().numpy()
+    preds = net(test_features).cpu().detach().numpy()
     # 将预测结果写入文件
     test_data[target_col] = pd.Series(preds.reshape(1, -1)[0])
     submission = pd.concat([test_data[keep_col], test_data[target_col]], axis=1)

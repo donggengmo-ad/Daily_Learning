@@ -1,36 +1,77 @@
 import torch
-from util.misc import Accumulator, Animator
+from util.misc import Accumulator, Animator, Timer
 
 def sgd(params, lr, batch_size):
-    """小批量随机梯度下降"""
+    """小批量随机梯度下降
+    :param params: 模型参数
+    :param lr: 学习率
+    :param batch_size: 批量大小
+    """
     with torch.no_grad(): # 不需要计算梯度，直接下降
         for param in params:
             param -= lr * param.grad / batch_size
             param.grad.zero_() # 清空梯度
 
-def accuracy(y_hat, y):
-    """计算预测正确的数量"""
+def accuracy(y_hat: torch.Tensor, y: torch.Tensor) -> float:
+    """计算预测正确的数量
+    :param y_hat: 预测值
+    :param y: 真实值
+    :return: 预测正确的数量
+    """
     if len(y_hat.shape) > 1 and y_hat.shape[1] > 1:
         y_hat = y_hat.argmax(axis=1)  # 取最大值的索引
     cmp = y_hat.type(y.dtype) == y
     return float(cmp.type(y.dtype).sum())
 
 def evaluate_accuracy(net, data_iter):
-    """计算在指定数据集上模型的精度"""
+    """计算在指定数据集上模型的精度
+    :param net: 模型
+    :param data_iter: 数据迭代器
+    :return: 模型分类正确数 / 分类总次数
+    """
     if isinstance(net, torch.nn.Module):
         net.eval()  # 设置为评估模式
     metric = Accumulator(2)  # 正确预测数、预测总数
     for X, y in data_iter:
-        metric.add(accuracy(net.forward(X), y), y.numel())
+        metric.add(accuracy(net(X), y), y.numel())
     return metric[0] / metric[1]
 
-def train_epoch_ch3(net, train_iter, loss, updater):
-    """训练模型一个迭代周期"""
+def evaluate_accuracy_gpu(net, data_iter, device:torch.device|None=None):
+    """使用指定设备，计算在数据集上模型的精度
+    :param net: 模型
+    :param data_iter: 数据迭代器
+    :param device: 设备
+    :return: 模型分类正确数 / 分类总次数
+    """
+    if isinstance(net, torch.nn.Module):
+        net.eval()  # 设置为评估模式
+        if not device:
+            device = next(iter(net.parameters())).device # 获取模型参数所在的设备
+    metric = Accumulator(2)  # 正确预测数、预测总数
+    with torch.no_grad():
+        for X, y in data_iter:
+            if isinstance(X, list): # list 逐个挪
+                X = [x.to(device) for x in X]
+            else: # tensor 直接挪
+                X = X.to(device)
+            y = y.to(device)
+            metric.add(accuracy(net(X), y), y.numel())
+    # 分类正确数 / 分类总次数
+    return metric[0] / metric[1]
+
+def train_epoch_ch3(net, train_iter, loss: torch.nn.Module, updater):
+    """训练模型一个迭代周期
+    :param net: 模型
+    :param train_iter: 训练数据迭代器
+    :param loss: 损失函数
+    :param updater: 更新器
+    :return: 训练损失、训练准确率
+    """
     if isinstance(net, torch.nn.Module):
         net.train()  # 设置为训练模式
     metric = Accumulator(3)
     for X, y in train_iter:
-        y_hat = net.forward(X)
+        y_hat = net(X)
         l = loss(y_hat, y)
         if isinstance(updater, torch.optim.Optimizer):
             updater.zero_grad()
@@ -44,13 +85,82 @@ def train_epoch_ch3(net, train_iter, loss, updater):
     # 返回训练损失、正确率
     return metric[0] / metric[2], metric[1] / metric[2]
 
-def train_ch3(net, train_iter, test_iter, loss,num_epochs, updater):
-    """训练模型"""
+def train_ch3(net,
+              train_iter,
+              test_iter,
+              loss: torch.nn.Module ,
+              num_epochs: int,
+              updater):
+    """训练模型
+    :param net: 模型
+    :param train_iter: 训练数据迭代器
+    :param test_iter: 测试数据迭代器
+    :param loss: 损失函数
+    :param num_epochs: 训练轮数
+    :param updater: 更新器
+    :return: None
+    """
     animator = Animator(xlabel='epoch', xlim=[1, num_epochs], ylim=[0.3, 0.9],
                         legend=['train loss', 'train acc', 'test acc'])
     for epoch in range(num_epochs):
         train_metrics = train_epoch_ch3(net, train_iter, loss, updater)
         test_acc = evaluate_accuracy(net, test_iter)
         animator.add(epoch + 1, train_metrics + (test_acc,))
-    train_loss, train_acc = train_metrics
+        train_loss, train_acc = train_metrics
 
+
+def train_ch6(net,
+              train_iter,
+              test_iter,
+              num_epochs: int,
+              lr: float=0.01,
+              loss: torch.nn.Module=torch.nn.CrossEntropyLoss(),
+              device: torch.device=torch.device('cpu')):
+    """在指定设备上训练模型
+    :param net: 模型
+    :param train_iter: 训练数据迭代器
+    :param test_iter: 验证数据迭代器
+    :param num_epochs: 训练轮数
+    :param lr: 学习率
+    :param loss: 损失函数
+    :param device: 设备
+    :return: None
+    """
+    def init_weights(m):
+        """对线性层进行 xavier 初始化"""
+        if type(m) == torch.nn.Linear:
+            torch.nn.init.xavier_uniform_(m.weight)
+    net.apply(init_weights)
+    print('training on', device)
+    net.to(device)
+    optimizer = torch.optim.SGD(net.parameters(), lr=lr)
+    animator = Animator(xlabel='epoch', xlim=[1, num_epochs], ylim=[0.3, 0.9],
+                        legend=['train loss', 'train acc', 'test acc'])
+    timer, num_batches = Timer(), len(train_iter)
+    for epoch in range(num_epochs):
+        # 训练损失、训练准确率、样本数
+        metric = Accumulator(3)
+        net.train()
+        for i, (X, y) in enumerate(train_iter):
+            timer.start()
+            optimizer.zero_grad()
+            # 输入输出张量移到设备
+            X, y = X.to(device), y.to(device)
+            # 计算梯度并更新参数
+            y_hat = net(X)
+            l = loss(y_hat, y)
+            l.backward()
+            optimizer.step()
+            # 累加训练损失、训练准确率、样本数
+            metric.add(l * X.shape[0], accuracy(y_hat, y), X.shape[0])
+            timer.stop()
+            # 计算训练损失、训练准确率、测试准确率
+            train_l = metric[0] / metric[2]
+            train_acc = metric[1] / metric[2]
+            if (i + 1) % (num_batches // 5) == 0 or i == num_batches - 1:
+                animator.add(epoch + (i + 1) / num_batches,
+                             (train_l, train_acc, None))
+        test_acc = evaluate_accuracy_gpu(net, test_iter, device)
+        animator.add(epoch + 1, (train_l, train_acc, test_acc))
+    print(f'loss {train_l:.3f}, train acc {train_acc:.3f}, test acc {test_acc:.3f}')
+    print(f'{metric[2] * num_epochs / timer.sum():.1f} examples/sec on {str(device)}')
