@@ -23,7 +23,7 @@ def accuracy(y_hat: torch.Tensor, y: torch.Tensor) -> float:
     cmp = y_hat.type(y.dtype) == y
     return float(cmp.type(y.dtype).sum())
 
-def evaluate_accuracy(net, data_iter):
+def evaluate_accuracy(net, data_iter) -> float:
     """计算在指定数据集上模型的精度
     :param net: 模型
     :param data_iter: 数据迭代器
@@ -36,7 +36,7 @@ def evaluate_accuracy(net, data_iter):
         metric.add(accuracy(net(X), y), y.numel())
     return metric[0] / metric[1]
 
-def evaluate_accuracy_gpu(net, data_iter, device:torch.device|None=None):
+def evaluate_accuracy_gpu(net, data_iter, device: torch.device | None = None)-> float | int:
     """使用指定设备，计算在数据集上模型的精度
     :param net: 模型
     :param data_iter: 数据迭代器
@@ -59,7 +59,7 @@ def evaluate_accuracy_gpu(net, data_iter, device:torch.device|None=None):
     # 分类正确数 / 分类总次数
     return metric[0] / metric[1]
 
-def train_epoch_ch3(net, train_iter, loss: torch.nn.Module, updater):
+def train_epoch_ch3(net, train_iter, loss: torch.nn.Module, updater)-> tuple[float, float]:
     """训练模型一个迭代周期
     :param net: 模型
     :param train_iter: 训练数据迭代器
@@ -98,9 +98,8 @@ def train_ch3(net,
     :param loss: 损失函数
     :param num_epochs: 训练轮数
     :param updater: 更新器
-    :return: None
     """
-    animator = Animator(xlabel='epoch', xlim=[1, num_epochs], ylim=[0.3, 0.9],
+    animator = Animator(xlabel='epoch', xlim=[1, num_epochs], ylim=[0.3, 1.0],
                         legend=['train loss', 'train acc', 'test acc'])
     for epoch in range(num_epochs):
         train_metrics = train_epoch_ch3(net, train_iter, loss, updater)
@@ -114,27 +113,31 @@ def train_ch6(net,
               test_iter,
               num_epochs: int,
               lr: float=0.01,
+              device: torch.device=torch.device('cpu'),
               loss: torch.nn.Module=torch.nn.CrossEntropyLoss(),
-              device: torch.device=torch.device('cpu')):
+              ylim: tuple[float, float]=(0.3, 0.9)):
     """在指定设备上训练模型
     :param net: 模型
     :param train_iter: 训练数据迭代器
     :param test_iter: 验证数据迭代器
     :param num_epochs: 训练轮数
     :param lr: 学习率
-    :param loss: 损失函数
     :param device: 设备
-    :return: None
+    :param loss: 损失函数
+    :param ylim: 训练图中 y 轴（损失与精度）范围
     """
     def init_weights(m):
-        """对线性层进行 xavier 初始化"""
-        if type(m) == torch.nn.Linear:
+        """对线性层、卷积层进行 xavier 初始化"""
+        if type(m) == torch.nn.Linear or type(m) == torch.nn.Conv2d:
             torch.nn.init.xavier_uniform_(m.weight)
+            if m.bias is not None:
+                torch.nn.init.zeros_(m.bias)
     net.apply(init_weights)
     print('training on', device)
     net.to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=lr)
-    animator = Animator(xlabel='epoch', xlim=[1, num_epochs], ylim=[0.3, 0.9],
+    # 实时画图，损失聚焦 0.3 ~ 1.0
+    animator = Animator(xlabel='epoch', xlim=[1, num_epochs], ylim=[*ylim],
                         legend=['train loss', 'train acc', 'test acc'])
     timer, num_batches = Timer(), len(train_iter)
     for epoch in range(num_epochs):

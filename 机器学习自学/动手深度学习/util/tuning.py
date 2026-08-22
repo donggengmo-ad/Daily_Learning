@@ -7,7 +7,7 @@ import numpy as np
 
 def get_net(in_features: int,
             kind: str ='linear',
-            layers: list|None = None):
+            layers: list|None = None)->nn.Module:
     """
     获取模型
     :param in_features: 输入特征数

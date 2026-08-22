@@ -121,6 +121,7 @@ models/
 model/
 
 # 认证信息
+.cherry/
 *_api.*
 *_cookies.*
 
