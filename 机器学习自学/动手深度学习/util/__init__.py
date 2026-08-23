@@ -1,4 +1,5 @@
 import util.data
-import util.plt
+from util.plt import *
 import util.train
 from util.misc import *
+import util.model

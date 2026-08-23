@@ -1,5 +1,5 @@
 import torch
-import util.plt as myplt
+from util.plt import set_axes
 from IPython import display
 from matplotlib import pyplot as plt
 import numpy as np
@@ -30,7 +30,7 @@ class Animator:
         if nrows * ncols == 1:
             self.axes = [self.axes, ]
         # 设置坐标轴
-        self.config_axes = lambda: myplt.set_axes(self.axes[0], xlabel, ylabel, xlim, ylim, xscale, yscale, legend)
+        self.config_axes = lambda: set_axes(self.axes[0], xlabel, ylabel, xlim, ylim, xscale, yscale, legend)
         self.X, self.Y, self.fmts = None, None, fmts
         self.legend = legend
     def add(self, x, y):
@@ -57,22 +57,6 @@ class Animator:
             self.axes[0].legend(self.legend)
         display.display(self.fig)
         display.clear_output(wait=True)
-
-def show_images(imgs, num_rows, num_cols, titles=None, scale=1.5):
-    """绘制图像列表"""
-    figsize = (num_cols * scale, num_rows * scale)
-    _, axes = plt.subplots(num_rows, num_cols, figsize=figsize)
-    axes = axes.flatten() # 将二维数组展平为一维数组
-    for i, (ax, img) in enumerate(zip(axes, imgs)):
-        if torch.is_tensor(img): # 图片张量
-            ax.imshow(img.numpy())
-        else: # PIL 图片
-            ax.imshow(img)
-        ax.axes.get_xaxis().set_visible(False)
-        ax.axes.get_yaxis().set_visible(False)
-        if titles:
-            ax.set_title(titles[i])
-    return axes
 
 class Timer:  #@save
     """记录多次运行时间"""
@@ -112,4 +96,12 @@ def try_gpu(i: int=0, mps: bool=True) -> torch.device:
     if mps and torch.backends.mps.is_available():
         return torch.device('mps')
     return torch.device('cpu')
+
+def try_all_gpus():
+    """返回所有可用的GPU，如果没有GPU，则返回[cpu(),]
+
+    Defined in :numref:`sec_use_gpu`"""
+    devices = [torch.device(f'cuda:{i}')
+             for i in range(torch.cuda.device_count())]
+    return devices if devices else [torch.device('cpu')]
 

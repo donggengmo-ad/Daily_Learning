@@ -34,7 +34,7 @@
 </defs>
 <g id="surface1">
   <!--white background-->
-  <rect style="fill:white;" width="682.666667" height="620" x="0" y="0"/>
+  <rect style="fill:white;" width="882.666667" height="820" x="0" y="0"/>
 <path style="fill:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;" d="M 585.936523 376.166992 L 671.436523 376.166992 L 671.436523 485.737305 L 585.936523 485.737305 Z M 585.936523 376.166992 " transform="matrix(1.333333,0,0,1.333333,-414.666667,-29.333333)"/>
 <path style=" stroke:none;fill-rule:nonzero;fill:rgb(69.803923%,85.09804%,100%);fill-opacity:1;" d="M 374.75 604.542969 L 472.214844 604.542969 L 472.214844 579.34375 L 374.75 579.34375 Z M 374.75 604.542969 "/>
 <path style="fill:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;" d="M 592.0625 456.507812 L 665.161133 456.507812 L 665.161133 475.407227 L 592.0625 475.407227 Z M 592.0625 456.507812 " transform="matrix(1.333333,0,0,1.333333,-414.666667,-29.333333)"/>

@@ -1,5 +1,5 @@
 import torch
-from util.misc import Accumulator, Animator, Timer
+from .misc import *
 
 def sgd(params, lr, batch_size):
     """小批量随机梯度下降
@@ -113,10 +113,10 @@ def train_ch6(net,
               test_iter,
               num_epochs: int,
               lr: float=0.01,
-              device: torch.device=torch.device('cpu'),
+              device: torch.device=try_gpu(),
               loss: torch.nn.Module=torch.nn.CrossEntropyLoss(),
-              ylim: tuple[float, float]=(0.3, 0.9)):
-    """在指定设备上训练模型
+              ylim: tuple[float, float]|None=None):
+    """训练模型，支持 GPU
     :param net: 模型
     :param train_iter: 训练数据迭代器
     :param test_iter: 验证数据迭代器
@@ -136,8 +136,8 @@ def train_ch6(net,
     print('training on', device)
     net.to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=lr)
-    # 实时画图，损失聚焦 0.3 ~ 1.0
-    animator = Animator(xlabel='epoch', xlim=[1, num_epochs], ylim=[*ylim],
+    # 实时画图
+    animator = Animator(xlabel='epoch', xlim=[1, num_epochs], ylim=ylim,
                         legend=['train loss', 'train acc', 'test acc'])
     timer, num_batches = Timer(), len(train_iter)
     for epoch in range(num_epochs):
@@ -167,3 +167,74 @@ def train_ch6(net,
         animator.add(epoch + 1, (train_l, train_acc, test_acc))
     print(f'loss {train_l:.3f}, train acc {train_acc:.3f}, test acc {test_acc:.3f}')
     print(f'{metric[2] * num_epochs / timer.sum():.1f} examples/sec on {str(device)}')
+
+def train_batch_ch13(net
+                     , X, y,
+                     loss: torch.nn.Module,
+                     trainer: torch.optim.Optimizer,
+                     devices: list[torch.device]):
+    """训练模型一个批量，支持并行训练
+    :param net: 模型
+    :param X: 输入
+    :param y: 标签
+    :param loss: 损失函数
+    :param trainer: 优化器
+    :param devices: 设备列表，devices[0] 为主设备
+    :return: 训练损失、训练准确率
+    """
+    if isinstance(X, list):
+        # 多输入时，将每个输入复制到 devices[0]
+        X = [x.to(devices[0]) for x in X]
+    else:
+        X = X.to(devices[0])
+    y = y.to(devices[0])
+    net.train()
+    trainer.zero_grad()
+    pred = net(X)
+    l = loss(pred, y)
+    l.sum().backward()
+    trainer.step()
+    train_loss = l.sum()
+    train_acc = accuracy(pred, y)
+    return train_loss, train_acc
+
+def train_ch13(net,
+               train_iter,
+               test_iter,
+               loss: torch.nn.Module,
+               trainer: torch.optim.Optimizer,
+               num_epochs: int,
+               devices: list[torch.device]=try_all_gpus()):
+    """训练模型，支持并行训练
+    :param net: 模型
+    :param train_iter: 训练数据迭代器
+    :param test_iter: 测试数据迭代器
+    :param loss: 损失函数
+    :param num_epochs: 训练轮数
+    :param trainer: 优化器
+    :param devices: 设备列表，devices[0] 为主设备
+    """
+    timer, num_batches = Timer(), len(train_iter)
+    animator = Animator(xlabel='epoch', xlim=[1, num_epochs], ylim=[0, 1],
+                            legend=['train loss', 'train acc', 'test acc'])
+    # 使用 DataParallel 将模型复制到多个 GPU 上
+    net = torch.nn.DataParallel(net, device_ids=devices).to(devices[0])
+    for epoch in range(num_epochs):
+        # 4个维度：储存训练损失，训练准确度，实例数，特点数
+        metric = Accumulator(4)
+        for i, (features, labels) in enumerate(train_iter):
+            timer.start()
+            l, acc = train_batch_ch13(
+                net, features, labels, loss, trainer, devices)
+            metric.add(l, acc, labels.shape[0], labels.numel())
+            timer.stop()
+            if (i + 1) % (num_batches // 5) == 0 or i == num_batches - 1:
+                animator.add(epoch + (i + 1) / num_batches,
+                             (metric[0] / metric[2], metric[1] / metric[3],
+                              None))
+        test_acc = evaluate_accuracy_gpu(net, test_iter)
+        animator.add(epoch + 1, (None, None, test_acc))
+    print(f'loss {metric[0] / metric[2]:.3f}, train acc '
+          f'{metric[1] / metric[3]:.3f}, test acc {test_acc:.3f}')
+    print(f'{metric[2] * num_epochs / timer.sum():.1f} examples/sec on '
+          f'{str(devices)}')

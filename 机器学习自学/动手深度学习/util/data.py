@@ -33,7 +33,7 @@ def get_fashion_mnist_labels(labels):
 
 def get_dataloader_workers():
     """使用多进程读取数据"""
-    return 4
+    return 6
 
 def load_data_fashion_mnist(batch_size, resize=None):
     """下载 Fashion-MNIST 数据集，然后将其加载到内存中
@@ -49,6 +49,17 @@ def load_data_fashion_mnist(batch_size, resize=None):
     mnist_test = torchvision.datasets.FashionMNIST(root='./data', train=False, transform=trans, download=True)
     return (data.DataLoader(mnist_train, batch_size, shuffle=True, num_workers=get_dataloader_workers()),
             data.DataLoader(mnist_test, batch_size, shuffle=False, num_workers=get_dataloader_workers()))
+
+# CIFAR-10 数据集
+def load_cifar10(is_train: bool, augs, batch_size):
+    """下载 CIFAR-10 数据集，然后将其加载到内存中
+    :param is_train: 是否为训练集
+    :param augs: 数据增强方法
+    :param batch_size: 批量大小
+    :return: 数据迭代器
+    """
+    dataset = torchvision.datasets.CIFAR10(root="./data", train=is_train, download=True, transform=augs)
+    return torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=is_train, num_workers=get_dataloader_workers())
 
 # kaggle 数据集
 DATA_HUB = dict()
