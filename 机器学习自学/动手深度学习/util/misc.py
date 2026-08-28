@@ -98,9 +98,7 @@ def try_gpu(i: int=0, mps: bool=True) -> torch.device:
     return torch.device('cpu')
 
 def try_all_gpus():
-    """返回所有可用的GPU，如果没有GPU，则返回[cpu(),]
-
-    Defined in :numref:`sec_use_gpu`"""
+    """返回所有可用的GPU，如果没有GPU，则返回[cpu(),]"""
     devices = [torch.device(f'cuda:{i}')
              for i in range(torch.cuda.device_count())]
     return devices if devices else [torch.device('cpu')]

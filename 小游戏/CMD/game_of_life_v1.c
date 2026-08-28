@@ -1,0 +1,243 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <windows.h>
+#include <conio.h>
+#include <time.h>
+
+#define WIDTH 200
+#define HIGH 60  //定义画面尺寸
+
+int cells[WIDTH][HIGH];
+int speed,paused;
+
+void gotoxy(int x,int y){//移动光标到xy位置
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD pos;
+    pos.X = x;
+    pos.Y = y;
+    SetConsoleCursorPosition(handle,pos);
+}
+void HideCursor(){//隐藏光标
+    CONSOLE_CURSOR_INFO cursor_info = {1,0};//第二个值为0表示隐藏光标
+    SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE),&cursor_info);
+}
+
+void startup();//数据初始化
+void withInput();
+void withoutInput();
+void show();//显示画面
+int countNeibour(int ,int );
+
+int main(){
+    startup();
+    while(1){//循环执行游戏
+        withInput();
+        withoutInput();
+        show();
+    }
+}
+
+void startup(){
+    srand((unsigned int) time(NULL));
+    HideCursor();
+    int x,y;
+    speed = 100;
+    paused = 0;
+    //初始化所有细胞
+    for(y = 0;y < HIGH;y++){
+        for(x = 0;x < WIDTH;x++){
+            cells[x][y] = rand() % 2;//随机生死
+        }
+    }
+}
+void withInput(){
+    char input;
+    if(kbhit()){//判断是否有输入
+        input = getch();
+        //根据输入操作
+        switch(input){
+            case '+':// 加速（减小延时）
+                if(speed > 2)
+                speed /= 2;
+                break;
+            case '-':// 减速（增大延时）
+                if(speed < 2000)
+                speed *= 2;
+                break;
+            case ' ': // 切换暂停/继续
+                paused = !paused;
+                break;
+            case 'r': // 重新随机化画面
+                int x,y;
+                for(y = 0;y < HIGH;y++){
+                    for(x = 0;x < WIDTH;x++){
+                        cells[x][y] = rand() % 2;
+                    }
+                }
+                break;
+        }
+        //限制速度边界
+        if(speed < 2){
+            speed = 2;
+        }
+        else if(speed > 2000){
+            speed = 2000;
+        }
+    }
+}
+void withoutInput(){
+    int x,y;
+    int tempCells[WIDTH][HIGH];
+    if(!paused){//未暂停则计算
+        //临时数组和原数组匹配
+        for(y = 0;y < HIGH;y++){
+            for(x = 0;x < WIDTH;x++){
+                tempCells[x][y] = cells[x][y];
+            }
+        }
+        //正式计算
+        for(y = 0;y < HIGH;y++){
+            for(x = 0;x < WIDTH;x++){
+                //计算周围活细胞数量
+                int neibour = countNeibour(x,y);
+                switch (neibour){
+                    case 3:
+                        tempCells[x][y] = 1;
+                        break;
+                    case 2:
+                        tempCells[x][y] = cells[x][y];
+                        break;
+                
+                    default:
+                        tempCells[x][y] = 0;
+                        break;
+                }
+            }
+        }
+        //更新原数组
+        for(y = 0;y < HIGH;y++){
+            for(x = 0;x < WIDTH;x++){
+                cells[x][y] = tempCells[x][y];
+            }
+        }
+        Sleep(speed);
+    }
+}
+void show(){
+    gotoxy(0,0);
+    int x,y;
+    for(y = 0;y < HIGH;y++){
+        for(x = 0;x < WIDTH;x++){
+            if(cells[x][y]){
+                printf("*");//生细胞
+            }
+            else{
+                printf(" ");//死细胞
+            }
+        }
+        printf("\n");
+    }
+}
+int countNeibour(int x,int y){
+    int count = 0;
+    int i,j;
+    //处理角落情况
+    if(x == 0 && y == 0){//左上角
+        for(j = y;j <= y + 1;j++){
+            for(i = x;i <= x + 1;i++){
+                if(i == x && j == y){
+                    continue;
+                }
+                count += cells[i][j];
+            }
+        }
+    }
+    else if(x == WIDTH - 1 && y == 0){//右上角
+        for(j = y;j <= y + 1;j++){
+            for(i = x - 1;i <= x;i++){
+                if(i == x && j == y){
+                    continue;
+                }
+                count += cells[i][j];
+            }
+        }
+    }
+    else if(x == 0 && y == HIGH - 1){//左下角
+        for(j = y - 1;j <= y;j++){
+            for(i = x;i <= x + 1;i++){
+                if(i == x && j == y){
+                    continue;
+                }
+                count += cells[i][j];
+            }
+        }
+    }
+    else if(x == WIDTH - 1 && y == HIGH - 1){//右下角
+        for(j = y - 1;j <= y;j++){
+            for(i = x - 1;i <= x;i++){
+                if(i == x && j == y){
+                    continue;
+                }
+                count += cells[i][j];
+            }
+        }
+    }
+    //处理边缘情况
+    else if(x == 0 && y != 0 && y != HIGH - 1){//左边缘
+        for(j = y - 1;j <= y + 1;j++){
+            for(i = x;i <= x + 1;i++){
+                if(i == x && j == y){
+                    continue;
+                }
+                count += cells[i][j];
+            }
+        }
+    }
+    else if(x == WIDTH - 1 && y != 0 && y != HIGH - 1){//右边缘
+        for(j = y - 1;j <= y + 1;j++){
+            for(i = x - 1;i <= x;i++){
+                if(i == x && j == y){
+                    continue;
+                }
+                count += cells[i][j];
+            }
+        }
+    }
+    else if(y == 0 && x != 0 && x != WIDTH - 1){//上边缘
+        for(j = y;j <= y + 1;j++){
+            for(i = x - 1;i <= x + 1;i++){
+                if(i == x && j == y){
+                    continue;
+                }
+                count += cells[i][j];
+            }
+        }
+    }
+    else if(y == HIGH - 1 && x != 0 && x != WIDTH - 1){//下边缘
+        for(j = y - 1;j <= y;j++){
+            for(i = x - 1;i <= x + 1;i++){
+                if(i == x && j == y){
+                    continue;
+                }
+                count += cells[i][j];
+            }
+        }
+    }
+    //正常情况
+    else{
+        for(j = y - 1;j <= y + 1;j++){
+            for(i = x - 1;i <= x + 1;i++){
+                if(i == x && j == y){
+                    continue;
+                }
+                count += cells[i][j];
+            }
+        }
+    }
+    return count;
+    /*
+        |(i-1,j-1)|(i-1,j)|(i-1,j+1)|
+        | (i,j-1) | (i,j) | (i,j+1) |
+        |(i+1,j-1)|(i+1,j)|(i+1,j+i)|
+    */
+}

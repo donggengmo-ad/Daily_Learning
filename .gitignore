@@ -126,5 +126,6 @@ model/
 *_cookies.*
 
 docs/
+checkpoint/
 
 /机器学习自学/.DS_Store

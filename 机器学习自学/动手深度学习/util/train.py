@@ -1,4 +1,6 @@
 import torch
+from jupyter_lsp import non_blocking
+
 from .misc import *
 
 def sgd(params, lr, batch_size):
@@ -184,10 +186,11 @@ def train_batch_ch13(net
     """
     if isinstance(X, list):
         # 多输入时，将每个输入复制到 devices[0]
-        X = [x.to(devices[0]) for x in X]
+        X = [x.to(devices[0], non_blocking=True) for x in X]
     else:
-        X = X.to(devices[0])
-    y = y.to(devices[0])
+        X = X.to(devices[0], non_blocking=True)
+    # 使用异步拷贝
+    y = y.to(devices[0], non_blocking=True)
     net.train()
     trainer.zero_grad()
     pred = net(X)
