@@ -1,9 +1,13 @@
 import torch
-from util.plt import set_axes
+from torch import nn
+import torch.nn.functional as F
+from .plt import set_axes
 from IPython import display
 from matplotlib import pyplot as plt
 import numpy as np
 import time
+import collections
+import typing
 
 class Accumulator:
     """在 n 个变量上累加"""
@@ -103,3 +107,108 @@ def try_all_gpus():
              for i in range(torch.cuda.device_count())]
     return devices if devices else [torch.device('cpu')]
 
+
+class Vocab:
+    """文本词汇表"""
+
+    def __init__(self, tokens=None, min_freq: int = 0, reserved_tokens=None):
+        """通过传入的 token 列表构建词汇表
+        :param tokens: 列表，包含所有文本的 token
+        :param min_freq: token 的最小频率（频率低于该值的 token 会被忽略）
+        :param reserved_tokens: 保留的 token 列表（BOS、EOS、PAD 等）
+        """
+        if tokens is None:
+            tokens = []
+        if reserved_tokens is None:
+            reserved_tokens = []
+        # 按出现频率排序
+        counter = count_corpus(tokens)
+        self.token_freqs = sorted(counter.items(),  # token-频率 对
+                                   key=lambda x: x[1],  # 按频率排序
+                                   reverse=True)  # 降序
+        # 未知词元索引为 0
+        self.unk = 0  # 未知词元的索引
+        unique_tokens = ['<unk>'] + reserved_tokens
+        # 按频率添加 token
+        unique_tokens += [token for token, freq in self.token_freqs
+                          if freq >= min_freq and
+                          token not in unique_tokens]
+        # 构建映射表
+        self.idx_to_token, self.token_to_idx = [], dict()
+        for token in unique_tokens:
+            self.idx_to_token.append(token)
+            self.token_to_idx[token] = len(self.idx_to_token) - 1
+
+    def __len__(self):
+        return len(self.idx_to_token)  # 词汇表大小
+
+    def __getitem__(self, tokens):
+        """获取 token 的索引"""
+        if not isinstance(tokens, (list, tuple)):  # 单个 token
+            return self.token_to_idx.get(tokens, self.unk)  # 返回索引，若 token 不在词汇表中则返回 unk 索引
+        return [self.__getitem__(token) for token in tokens]  # token 列表（递归调用）
+
+    def to_tokens(self, indices):
+        """获取索引对应的 token"""
+        if not isinstance(indices, (list, tuple)):  # 单个索引
+            return self.idx_to_token[indices]
+        return [self.idx_to_token[index] for index in indices]  # 索引列表
+
+
+def tokenize(lines, token='word'):
+    """将文本行拆分为单词或字符"""
+    if token == 'word': # 按空格拆分
+        return [line.split() for line in lines]
+    elif token == 'char': # 按字符拆分
+        return [list(line) for line in lines]
+    else:
+        print('错误：未知词元类型：' + token)
+
+def count_corpus(tokens):
+    """统计 token 的频率"""
+    # tokens 是 1D 列表或 2D 列表
+    if len(tokens) == 0 or isinstance(tokens[0], list):
+        # 将所有子列表展平到一个列表中
+        tokens = [token for line in tokens for token in line]
+    return collections.Counter(tokens)
+
+
+# RNN
+def predict_ch8(prefix: str, num_preds: int, net, vocab: Vocab, device: torch.device):
+    """根据前缀 prefix 生成后续的 num_preds 个字符
+    :param prefix: 前缀字符串
+    :param num_preds: 预测的字符数
+    :param net: 循环神经网络模型
+    :param vocab: 词表
+    :param device: 设备
+    :return: 生成的字符串
+    """
+    # 获取当前输入的函数
+    get_input = lambda: torch.tensor([[outputs[-1]]], device=device).reshape(1, 1)  # 取最后一次输出
+    # 将 prefix 转换为 token id 序列
+    state = net.begin_state(batch_size=1, device=device)
+    outputs = [vocab[prefix[0]]]  # 输出列表，先放入第一个字符的 id
+    for y in prefix[1:]:  # 遍历前缀的剩余字符
+        y_hat, state = net(get_input(), state)  # 前向计算，更新隐藏状态
+        outputs.append(vocab[y])  # 将当前字符的 id 加入输出列表
+    for y in range(num_preds):  # 生成后续字符
+        y_hat, state = net(get_input(), state)  # 前向计算，更新隐藏状态
+        outputs.append(int(y_hat.argmax(dim=1).reshape(1)))  # 取最大概率的字符 id 加入输出列表
+    return ''.join([vocab.idx_to_token[i] for i in outputs])  # 将 id 转换为字符并拼接成字符串
+
+def grad_clipping(net, theta: float):
+    """裁剪梯度
+    :param net: 循环神经网络模型
+    :param theta: 阈值
+    :param device: 设备
+    """
+    if isinstance(net, nn.Module):
+        params = [p for p in net.parameters() if p.requires_grad] # 获取需要梯度的参数
+    else:
+        params = net.params # 如果是自定义模型，直接取 params
+    # 计算梯度的 L2 范数，所有参数的梯度平方和开根
+    norm = torch.sqrt(sum(torch.sum((p.grad ** 2)) for p in params))
+    if norm > theta: # 如果范数超过阈值
+        for param in params:
+            # 按比例缩放梯度
+            param.grad[:] *= theta / norm # [:] 表示 inplace

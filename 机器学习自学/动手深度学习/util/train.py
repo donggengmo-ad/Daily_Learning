@@ -1,6 +1,7 @@
 import torch
 from jupyter_lsp import non_blocking
-
+import math
+from torch import nn
 from .misc import *
 
 def sgd(params, lr, batch_size):
@@ -241,3 +242,77 @@ def train_ch13(net,
           f'{metric[1] / metric[3]:.3f}, test acc {test_acc:.3f}')
     print(f'{metric[2] * num_epochs / timer.sum():.1f} examples/sec on '
           f'{str(devices)}')
+
+# rnn 训练
+def train_epoch_ch8(net, train_iter, loss, updater, device: torch.device, use_random_iter: bool):
+    """训练一个迭代周期
+    :param net: 循环神经网络模型
+    :param train_iter: 训练数据迭代器
+    :param loss: 损失函数
+    :param updater: 优化器
+    :param device: 设备
+    :param use_random_iter: 是否使用随机采样
+    :return: 平均困惑度，训练速度
+    """
+    state, timer = None, Timer()
+    metric = Accumulator(2) # 累加总损失和总词数
+    for X, Y in train_iter:
+        if state is None or use_random_iter:
+            # 初始化隐藏状态，随机采样时每个小批量都重新初始化
+            state = net.begin_state(batch_size=X.shape[0], device=device)
+        else:
+            # 如果是顺序采样，使用上一个小批量的隐藏状态，并将其从前面的计算图中分离出来
+            if isinstance(net, nn.Module) and not isinstance(state, tuple):
+                state.detach_()
+            else:
+                for s in state:
+                    s.detach_()
+        X, Y = X.to(device), Y.to(device)
+        y = Y.T.reshape(-1) # 将标签 (T, B) 展平为 (T*B,)
+        y_hat, state = net(X, state) # 前向计算
+        l = loss(y_hat, y.long()).mean() # 计算损失
+        if isinstance(updater, torch.optim.Optimizer):
+            updater.zero_grad()
+            l.backward()
+            grad_clipping(net, 1) # 梯度裁剪
+            updater.step()
+        else:
+            l.backward() # 自定义优化器，直接调用 backward
+            grad_clipping(net, 1)
+            updater(batch_size=1) # 更新参数，传入批量大小为 1，因为已经在 loss 中取了平均
+        metric.add(l * y.numel(), y.numel()) # 累加总损失和总词数
+    return math.exp(metric[0] / metric[1]), metric[1] / timer.stop() # 平均困惑度, 训练速度
+
+def train_ch8(net,
+              train_iter,
+              vocab,
+              lr,
+              num_epochs,
+              device,
+              use_random_iter=False,
+              prefix: list[str] | tuple[str]=('time traveller ', 'traveller ')):
+    """训练模型
+    :param net: 循环神经网络模型
+    :param train_iter: 训练数据迭代器
+    :param vocab: 词表
+    :param lr: 学习率
+    :param num_epochs: 迭代周期数
+    :param device: 设备
+    :param use_random_iter: 是否使用随机采样
+    :param prefix: 预测的前缀
+    """
+    loss = nn.CrossEntropyLoss() # 定义交叉熵损失函数
+    animator = Animator(xlabel='epoch', ylabel='perplexity', legend=['train'], xlim=[10, num_epochs]) # 绘制困惑度曲线
+    if isinstance(net, nn.Module):
+        updater = torch.optim.SGD(net.parameters(), lr=lr) # 使用 PyTorch 的优化器
+    else:
+        updater = lambda batch_size: sgd(net.params, lr, batch_size) # 自定义优化器
+    predict = lambda prefix: predict_ch8(prefix, 50, net, vocab, device) # 预测 50 个字
+    for epoch in range(num_epochs):
+        ppl, speed = train_epoch_ch8(net, train_iter, loss, updater, device, use_random_iter)
+        if (epoch + 1) % 10 == 0:
+            print(predict(prefix[0]))
+            animator.add(epoch + 1, [ppl])
+    print(f'困惑度 {ppl:.1f}, {speed:.1f} token/秒')
+    for p in prefix:
+        print(predict(p))

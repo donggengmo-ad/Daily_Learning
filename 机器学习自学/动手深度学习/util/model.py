@@ -1,7 +1,9 @@
 from torch import nn
 from torch.nn import functional as F
 import torch
+import typing
 
+# CNN
 class Inception(nn.Module):
     def __init__(self, in_channels: int, c1: int, c2: tuple[int, int], c3: tuple[int, int], c4: int, **kwargs):
         """Inception 块
@@ -101,3 +103,83 @@ def resnet18(num_classes, in_channels=1):
     net.add_module("fc", nn.Sequential(nn.Flatten(),
                                        nn.Linear(512, num_classes)))
     return net
+
+class RNNModelScratch:
+    """从零实现的循环神经网络模型"""
+
+    def __init__(self,
+                 vocab_size: int,
+                 num_hiddens: int,
+                 device: torch.device,
+                 get_params: typing.Callable,
+                 init_state: typing.Callable,
+                 forward_fn: typing.Callable):
+        """初始化循环神经网络模型
+        :param vocab_size: 词表大小
+        :param num_hiddens: 隐藏层大小
+        :param device: 设备
+        :param get_params: 获取参数的函数 (vocab_size, num_hiddens, device) -> params
+        :param init_state: 初始化隐藏状态的函数 (batch_size, num_hiddens, device) -> state
+        :param forward_fn: 前向计算的函数 (inputs, state, params) -> (outputs, state)
+        """
+        self.vocab_size, self.num_hiddens = vocab_size, num_hiddens
+        self.params = get_params(vocab_size, num_hiddens, device)
+        self.init_state, self.forward_fn = init_state, forward_fn
+
+    def __call__(self, X: torch.Tensor, state: tuple):
+        """前向计算
+        :param X: 输入 token id 序列 (B, T)
+        :param state: 隐藏状态 (H)
+        :return: 输出竖拼接 (T*B, V), 隐藏状态 (H)
+        """
+        X = F.one_hot(X.T.long(), self.vocab_size).type(torch.float32)  # one-hot 编码成 (T, B, V)
+        return self.forward_fn(X, state, self.params)  # 调用 rnn 函数计算输出和隐藏状态
+
+    def begin_state(self, batch_size: int, device: torch.device):
+        """初始化隐藏状态
+        :param batch_size: 批量大小
+        :param device: 设备
+        :return: 隐藏状态 (H)
+        """
+        return self.init_state(batch_size, self.num_hiddens, device)
+
+class RNNModel(nn.Module):
+    """循环神经网络模型"""
+    def __init__(self, rnn_layer, vocab_size: int):
+        """
+        :param rnn_layer: RNN 层
+        :param vocab_size: 词表大小
+        """
+        super().__init__()
+        self.rnn = rnn_layer
+        self.vocab_size = vocab_size
+        self.num_hiddens = rnn_layer.hidden_size
+        # 如果是双向 RNN，则 num_directions = 2，否则为 1
+        self.num_directions = 1 + rnn_layer.bidirectional
+        # 输出层，将 RNN 的输出映射到词表大小的维度
+        self.linear = nn.Linear(self.num_directions * self.num_hiddens, self.vocab_size)
+
+    def forward(self, X: torch.Tensor, state: torch.Tensor):
+        """前向计算
+        :param X: 输入 token id 序列 (B, T)
+        :param state: 隐藏状态 (num_layers * num_directions, B, H)
+        :return: 输出竖拼接 (T*B, V), 隐藏状态 (num_layers * num_directions, B, H)
+        """
+        X = F.one_hot(X.T.long(), self.vocab_size).type(torch.float32) # one-hot 编码成 (T, B, V)
+        Y, state = self.rnn(X, state) # 前向计算
+        output = self.linear(Y.reshape(-1, Y.shape[-1])) # 输出层，(T*B, V)
+        return output, state
+
+    def begin_state(self, batch_size: int, device: torch.device):
+        """初始化隐藏状态
+        :param batch_size: 批量大小
+        :param device: 设备
+        :return: 隐藏状态 (num_layers * num_directions, B, H)
+        """
+        if not isinstance(self.rnn, nn.LSTM):
+            # 如果是 RNN 或 GRU，返回全 0 的隐藏状态
+            return torch.zeros((self.num_directions * self.rnn.num_layers, batch_size, self.num_hiddens), device=device)
+        else:
+            # 如果是 LSTM，返回全 0 的隐藏状态和细胞状态
+            return (torch.zeros((self.num_directions * self.rnn.num_layers, batch_size, self.num_hiddens), device=device),
+                    torch.zeros((self.num_directions * self.rnn.num_layers, batch_size, self.num_hiddens), device=device))

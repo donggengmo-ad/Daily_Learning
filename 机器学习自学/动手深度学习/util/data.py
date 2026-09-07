@@ -1,4 +1,5 @@
-import os, requests, hashlib
+import os, requests, hashlib, re
+import typing
 import zipfile, tarfile
 import torch
 from torch.utils import data
@@ -11,6 +12,8 @@ from pathlib import Path
 import shutil
 import pandas as pd
 import numpy as np
+from .misc import tokenize, Vocab
+import json
 
 def load_array(data_arrays: tuple, batch_size, is_train=True):
     """构造一个 PyTorch 数据迭代器"""
@@ -364,3 +367,205 @@ def load_data_voc(batch_size, crop_size):
         drop_last=True,
         num_workers=get_dataloader_workers())
     return train_iter, test_iter
+
+# 《Time Machine》小说数据
+DATA_HUB['time_machine'] = (DATA_URL + 'timemachine.txt', '090b5e7e70c295757f55df93cb0a180b9691891a')
+
+def read_time_machine():
+    """将《Time Machine》小说加载到文本行的列表中"""
+    with open(download('time_machine'), 'r') as f:
+        lines = f.readlines()
+    # 使用正则表达式去掉非字母字符，并将文本转换为小写
+    return [re.sub('[^A-Za-z]+', ' ', line).strip().lower() for line in lines]
+
+def load_corpus_time_machine(max_tokens=-1, token='char'):
+    """返回时序数据和词汇表
+    :param max_tokens: 最大 token 数量，若为 -1 则不限制
+    :param token: 'word' 或 'char'，按单词或字符拆分
+    :return: corpus (列表，包含所有 token 的索引) 和 vocab (词汇表)
+    """
+    lines = read_time_machine()
+    tokens = tokenize(lines, token) # 按字符拆分
+    vocab = Vocab(tokens) # 构建词汇表
+    # 将所有 token 转成索引
+    corpus = [vocab[token] for line in tokens for token in line]
+    if max_tokens > 0:
+        corpus = corpus[:max_tokens]
+    return corpus, vocab
+
+def seg_data_iter_random(corpus, batch_size, num_steps):
+    """使用随机采样生成小批量子序列
+    :param corpus: 文本序列
+    :param batch_size: 小批量的样本数
+    :param num_steps: 每个样本的时间步数
+    """
+    # 随机偏移量，保证每次数据切块不一样
+    corpus = corpus[random.randint(0, num_steps - 1):]
+    # 子序列数量，-1 因为考虑标签
+    num_subseqs = (len(corpus) - 1) // num_steps
+    # 长度为 num_steps 的子序列的起始索引
+    initial_indices = list(range(0, num_subseqs * num_steps, num_steps))
+    # 随机打乱起始索引
+    random.shuffle(initial_indices)
+    def data(pos):
+        """根据索引返回长度为 num_steps 的序列"""
+        return corpus[pos: pos + num_steps]
+    num_batches = num_subseqs // batch_size # 小批量数量
+    for i in range(0, batch_size * num_batches, batch_size): # 每次取 batch_size 个子序列
+        initial_indices_per_batch = initial_indices[i: i + batch_size] # 每个小批量的起始索引
+        X = [data(j) for j in initial_indices_per_batch] # 每个小批量的输入
+        Y = [data(j + 1) for j in initial_indices_per_batch] # 每个小批量的标签（输入右移一位）
+        yield torch.tensor(X), torch.tensor(Y)
+
+def seq_data_iter_sequential(corpus, batch_size, num_steps):
+    """使用顺序分区生成小批量子序列
+    :param corpus: 文本序列
+    :param batch_size: 小批量的样本数
+    :param num_steps: 每个样本的时间步数
+    """
+    # 从随机偏移量开始划分序列，保证每次划分不一样
+    offset = random.randint(0, num_steps)
+    num_tokens = ((len(corpus) - offset - 1) // batch_size) * batch_size # 可整除的 token 数量
+    Xs = torch.tensor(corpus[offset: offset + num_tokens]) # 输入
+    Ys = torch.tensor(corpus[offset + 1: offset + 1 + num_tokens]) # 标签（输入右移一位）
+    Xs, Ys = Xs.reshape(batch_size, -1), Ys.reshape(batch_size, -1) # 每行是一个小批量
+    num_batches = Xs.shape[1] // num_steps # 小批量数量
+    for i in range(0, num_steps * num_batches, num_steps): # 每次取 num_steps 个时间步
+        X = Xs[:, i: i + num_steps] # 每个小批量的输入
+        Y = Ys[:, i: i + num_steps] # 每个小批量的标签（输入右移一位）
+        yield X, Y
+
+
+class SeqDataLoader:
+    """加载序列数据的迭代器"""
+    def __init__(self,
+                 batch_size: int,
+                 num_steps: int,
+                 use_random_iter: bool,
+                 max_tokens: int = -1,
+                 dataset_load_fn: typing.Callable=load_corpus_time_machine):
+        """初始化迭代器
+        :param batch_size: 小批量的样本数
+        :param num_steps: 每个样本的时间步数
+        :param use_random_iter: 是否使用随机采样
+        :param max_tokens: 最大 token 数量，-1 表示不限制
+        :param dataset_load_fn: 加载数据集的函数
+        """
+        if use_random_iter:
+            self.data_iter_fn = seg_data_iter_random
+        else:
+            self.data_iter_fn = seq_data_iter_sequential
+        self.corpus, self.vocab = dataset_load_fn(max_tokens)  # 读取语料库和词汇表
+        self.batch_size, self.num_steps = batch_size, num_steps
+
+    def __iter__(self):
+        return self.data_iter_fn(self.corpus, self.batch_size, self.num_steps)
+
+def load_data_time_machine(batch_size: int, num_steps: int, use_random_iter: bool=False, max_tokens: int=-1):
+    """返回时光机器数据集的迭代器和词汇表
+    :param batch_size: 小批量的样本数
+    :param num_steps: 每个样本的时间步数
+    :param use_random_iter: 是否使用随机采样
+    :param max_tokens: 最大 token 数量，-1 表示不限制
+    """
+    data_iter = SeqDataLoader(batch_size, num_steps, use_random_iter, max_tokens,
+                              dataset_load_fn=load_corpus_time_machine)
+    return data_iter, data_iter.vocab
+
+# 自定义宋词数据集
+def read_songci():
+    """读取宋词数据集"""
+    # 数据集里全是 json
+    lines = []
+    base_dir = Path('./data/songci')
+    for file in base_dir.iterdir():
+        if file.suffix == '.json':
+            with open(file, 'r', encoding='utf-8') as f:
+                data_dicts = json.load(f)
+                # data_dicts 是一个字典列表
+                # poem 是字典，poem['paragraphs'] 是字符串列表
+                # poem_lines 是一个字符串列表，extend 方法将每个段落添加到 lines 列表中
+                poem_lines = [paragraph for poem in data_dicts for paragraph in poem['paragraphs']]
+                lines.extend(poem_lines) # 将每个段落添加到 lines 列表中
+    return [line.strip() for line in lines if line.strip()]
+
+def load_corpus_songci(max_tokens=-1):
+    """返回宋词数据集的语料库和词汇表
+    :param max_tokens: 最大 token 数量，若为 -1 则不限制
+    :return: corpus (列表，包含所有 token 的索引) 和 vocab (词汇表)
+    """
+    lines = read_songci()
+    tokens = tokenize(lines, 'char') # 按字符拆分
+    vocab = Vocab(tokens) # 构建词汇表
+    # 将所有 token 转成索引
+    corpus = [vocab[token] for line in tokens for token in line]
+    if max_tokens > 0:
+        corpus = corpus[:max_tokens]
+    return corpus, vocab
+
+def load_data_songci(batch_size: int, num_steps: int, use_random_iter: bool=False, max_tokens: int=-1):
+    """返回宋词数据集的迭代器和词汇表
+    :param batch_size: 小批量的样本数
+    :param num_steps: 每个样本的时间步数
+    :param use_random_iter: 是否使用随机采样
+    :param max_tokens: 最大 token 数量，-1 表示不限制
+    """
+    data_iter = SeqDataLoader(batch_size, num_steps, use_random_iter, max_tokens,
+                              dataset_load_fn=load_corpus_songci)
+    return data_iter, data_iter.vocab
+
+# 机器翻译数据集
+DATA_HUB['fra-eng'] = (DATA_URL + 'fra-eng.zip', '94646ad1522d915e7b0f9296181140edcf86a4f5')
+
+def read_data_nmt():
+    """加载“英语-法语”数据集"""
+    data_dir = download_extract('fra-eng')
+    with open(os.path.join(data_dir, 'fra.txt'), 'r', encoding='utf-8') as f:
+        return f.read()
+
+def preprocess_nmt(text):
+    """预处理“英语-法语”数据集"""
+    def no_space(char, prev_char):
+        """判断是否需要在两个字符之间添加空格"""
+        return char in set(',.!?') and prev_char != ' '
+    text = text.replace('\u202f', ' ').replace('\xa0', ' ').lower() # 将文本转换为小写，并替换特殊空格
+    out = [' ' + char if i > 0 and no_space(char, text[i - 1]) else char for i, char in enumerate(text)] # 在标点符号前添加空格
+    return ''.join(out)
+
+def tokenize_nmt(text, num_examples=None):
+    """将“英语-法语”数据集拆分为英语和法语的句子对"""
+    source, target = [], []
+    for i, line in enumerate(text.split('\n')):
+        if num_examples and i >= num_examples:
+            break
+        parts = line.split('\t')
+        if len(parts) == 2:
+            source.append(parts[0].strip())
+            target.append(parts[1].strip())
+    return source, target
+
+def truncate_pad(line, num_steps, padding_token):
+    """截断或填充文本序列"""
+    if len(line) > num_steps:
+        return line[:num_steps]  # 截断
+    return line + [padding_token] * (num_steps - len(line))  # 填充
+
+def build_array_nmt(lines, vocab, num_steps):
+    """返回小批量"""
+    lines = [vocab[l] for l in lines]
+    lines = [l + [vocab['<eos>']] for l in lines]  # 添加 <eos> 结束标记
+    array = torch.tensor([truncate_pad(l, num_steps, vocab['<pad>']) for l in lines])
+    valid_len = (array != vocab['<pad>']).type(torch.int32).sum(1)  # 计算有效长度
+    return array, valid_len
+
+def load_data_nmt(batch_size, num_steps, num_examples=600):
+    """返回“英语-法语”数据集的迭代器和词表"""
+    text = preprocess_nmt(read_data_nmt())
+    source, target = tokenize_nmt(text, num_examples)
+    src_vocab = Vocab(source, min_freq=2, reserved_tokens=['<pad>', '<bos>', '<eos>'])
+    tgt_vocab = Vocab(target, min_freq=2, reserved_tokens=['<pad>', '<bos>', '<eos>'])
+    src_array, src_valid_len = build_array_nmt(source, src_vocab, num_steps)
+    tgt_array, tgt_valid_len = build_array_nmt(target, tgt_vocab, num_steps)
+    data_arrays = (src_array, src_valid_len, tgt_array, tgt_valid_len)
+    data_iter = load_array(data_arrays, batch_size)
+    return data_iter, src_vocab, tgt_vocab
