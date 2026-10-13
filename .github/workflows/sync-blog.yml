@@ -1,0 +1,73 @@
+name: Sync learning notes to Alex's Space
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alex-space-learning-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.repository == 'donggengmo-ad/Daily_Learning'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Read latest published learning source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: main
+          path: learning
+          fetch-depth: 0
+          filter: blob:none
+          persist-credentials: true
+          sparse-checkout: |
+            算法自学
+            机器学习自学/动手深度学习
+      - name: Open blog with repository-specific sync key
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: donggengmo-ad/donggengmo-ad.github.io
+          ref: main
+          path: blog
+          ssh-key: ${{ secrets.BLOG_SYNC_DEPLOY_KEY }}
+      - name: Set up Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: blog/package-lock.json
+      - name: Sync configured directories, validate, and publish snapshot
+        working-directory: blog
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # Retry from the latest blog revision if a simultaneous blog edit wins the push.
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+            npm ci
+            npm run sync-learning -- ../learning
+            git add -- src/content/blog/learning public/learning-assets config/learning-snapshot.json
+            if git diff --cached --quiet; then
+              echo 'Selected notes and assets are unchanged. No blog deployment needed.' >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            npm run test:learning
+            npm run check
+            npm run build
+            npm run verify
+            git commit -m "Sync learning notes from $(git -C ../learning rev-parse --short HEAD)"
+            if git push origin HEAD:main; then
+              echo 'Learning snapshot published. The blog Pages workflow deploys this commit.' >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+          done
+          echo 'Blog changed during all three attempts; retry this workflow.' >&2
+          exit 1

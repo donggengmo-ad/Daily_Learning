@@ -115,10 +115,12 @@ int match(string &s){
 
 ### 定义
 last[u] 表示 u 的fail 链上第一个为模式串结尾
-$$last[u] = \begin{cases}
+$$
+last[u] = \begin{cases}
     fail[u] & \text{fail[u] 为模式串结尾} \\
     last[fail[u]] & \text{fail[u] 不为模式串结尾}
-\end{cases}$$
+\end{cases}
+$$
 ```cpp
 struct Node{
     ...
