@@ -27,6 +27,7 @@ jobs:
           filter: blob:none
           persist-credentials: true
           sparse-checkout: |
+            网络安全自学
             算法自学
             机器学习自学/动手深度学习
       - name: Open blog with repository-specific sync key
