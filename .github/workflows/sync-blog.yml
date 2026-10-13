@@ -26,10 +26,7 @@ jobs:
           fetch-depth: 0
           filter: blob:none
           persist-credentials: true
-          sparse-checkout: |
-            网络安全自学
-            算法自学
-            机器学习自学/动手深度学习
+          sparse-checkout: /
       - name: Open blog with repository-specific sync key
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -54,6 +51,7 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             npm ci
+            node scripts/configure-learning-source.mjs ../learning
             npm run sync-learning -- ../learning
             git add -- src/content/blog/learning public/learning-assets config/learning-snapshot.json
             if git diff --cached --quiet; then
@@ -61,6 +59,7 @@ jobs:
               exit 0
             fi
             npm run test:learning
+            npm run test:admin
             npm run check
             npm run build
             npm run verify
